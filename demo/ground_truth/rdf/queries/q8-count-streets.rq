@@ -1,0 +1,15 @@
+# How many streets are on the map?
+# Counts visible objects, not source features: a street is counted only if some
+# part of it survived to the image. "Street" here means a road-layer object
+# whose source highway tag is a street class, excluding footways and steps.
+PREFIX cg: <https://w3id.org/cartograph#>
+PREFIX ex: <https://example.org/berlin/>
+
+SELECT (COUNT(DISTINCT ?object) AS ?streets) WHERE {
+  ?object a cg:VisibleObject ;
+          cg:inLayer [ cg:layerName "roads" ] ;
+          cg:representsFeature ?feature .
+  ?feature ex:highway ?highway .
+  FILTER(?highway IN ("motorway", "trunk", "primary", "secondary", "tertiary",
+                      "residential", "unclassified", "living_street", "pedestrian", "service"))
+}

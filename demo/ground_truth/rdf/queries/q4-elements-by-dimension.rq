@@ -1,0 +1,13 @@
+# Display elements grouped by topological anchor dimension. Mirrors CQ8.
+PREFIX cg: <https://w3id.org/cartograph#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+SELECT ?anchor (COUNT(?element) AS ?elements) (SUM(?pixels) AS ?totalPixels) WHERE {
+  ?element a/rdfs:subClassOf* cg:DisplayElement ;
+           cg:hasAnchorDimension ?concept ;
+           cg:pixelCount ?pixels .
+  ?concept skos:prefLabel ?anchor .
+}
+GROUP BY ?anchor
+ORDER BY ?anchor

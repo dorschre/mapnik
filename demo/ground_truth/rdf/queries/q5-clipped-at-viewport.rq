@@ -1,0 +1,13 @@
+# Which objects run off the edge of the image - their visible shape is cut by
+# the viewport, so their source geometry extends beyond what is shown.
+PREFIX cg: <https://w3id.org/cartograph#>
+
+SELECT ?layer ?featureId ?pixels WHERE {
+  ?element cg:isClipped true ;
+           cg:partOfVisibleObject ?object ;
+           cg:inLayer [ cg:layerName ?layer ] .
+  ?object cg:featureId ?featureId ;
+          cg:visiblePixelCount ?pixels .
+}
+ORDER BY DESC(?pixels)
+LIMIT 10

@@ -1,0 +1,14 @@
+# Provenance: element -> rendering activity -> software agent. Mirrors CQ11.
+PREFIX cg: <https://w3id.org/cartograph#>
+PREFIX cgp: <https://w3id.org/cartograph-provenance#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?agentLabel (COUNT(?element) AS ?elements) WHERE {
+  ?element a/rdfs:subClassOf* cg:DisplayElement ;
+           prov:wasGeneratedBy ?activity .
+  ?activity a cgp:MapRenderingActivity ;
+            prov:wasAssociatedWith ?agent .
+  ?agent rdfs:label ?agentLabel .
+}
+GROUP BY ?agentLabel

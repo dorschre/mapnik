@@ -1,0 +1,15 @@
+# Benchmark invariant: a value that exists in the datasource but was never
+# drawn must not appear as visible information. This asks for objects whose
+# source name is NOT the label readable on the map.
+PREFIX cg: <https://w3id.org/cartograph#>
+PREFIX ex: <https://example.org/berlin/>
+
+SELECT ?featureId ?sourceName ?visibleLabel WHERE {
+  ?object a cg:VisibleObject ;
+          cg:representsFeature ?feature ;
+          cg:featureId ?featureId .
+  ?feature ex:name ?sourceName .
+  OPTIONAL { ?object cg:visibleLabel ?visibleLabel }
+  FILTER(!BOUND(?visibleLabel))
+}
+LIMIT 10

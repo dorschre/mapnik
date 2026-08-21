@@ -1,0 +1,16 @@
+PREFIX cg:   <https://w3id.org/cartograph#>
+PREFIX cgp:  <https://w3id.org/cartograph-provenance#>
+PREFIX geo:  <http://www.opengis.net/ont/geosparql#>
+PREFIX ex:   <https://example.org/nuremberg/>
+
+SELECT ?element ?elementType ?drawOrder ?portrayalType ?renderedText WHERE {
+  ?element cg:depictsFeature ex:feat_neutorstrasse ;
+           cg:inMap ex:tile_z17_44758 ;
+           a ?elementType ;
+           cg:drawOrder ?drawOrder ;
+           cg:hasPortrayal ?portrayal .
+  ?portrayal a ?portrayalType .
+  FILTER(?elementType != cg:DisplayElement && ?portrayalType != cg:Portrayal && ?portrayalType != cg:CompoundPortrayal)
+  OPTIONAL { ?portrayal cg:renderedText ?renderedText . }
+}
+ORDER BY ?drawOrder

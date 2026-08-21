@@ -1,0 +1,14 @@
+# Which visible objects cannot be linked back to source data?
+# An object with no identity beyond its layer and per-layer feature number is
+# useless for building gold answers that reference the underlying dataset.
+PREFIX cg: <https://w3id.org/cartograph#>
+PREFIX ex: <https://example.org/osm-carto/>
+
+SELECT ?layer (COUNT(DISTINCT ?object) AS ?withoutOsmId) WHERE {
+  ?object a cg:VisibleObject ;
+          cg:representsFeature ?feature ;
+          cg:inLayer [ cg:layerName ?layer ] .
+  FILTER NOT EXISTS { ?feature ex:osm_id ?id }
+}
+GROUP BY ?layer
+ORDER BY DESC(?withoutOsmId)

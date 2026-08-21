@@ -1,0 +1,11 @@
+# How many places are on the map, and how many of them are labelled?
+PREFIX cg: <https://w3id.org/cartograph#>
+
+SELECT ?places ?labelled WHERE {
+  { SELECT (COUNT(DISTINCT ?o) AS ?places) WHERE {
+      ?o a cg:VisibleObject ; cg:inLayer [ cg:layerName "places" ] .
+  } }
+  { SELECT (COUNT(DISTINCT ?o) AS ?labelled) WHERE {
+      ?o a cg:VisibleObject ; cg:inLayer [ cg:layerName "places" ] ; cg:visibleLabel ?label .
+  } }
+}

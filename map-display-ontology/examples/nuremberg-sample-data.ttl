@@ -1,0 +1,693 @@
+@prefix ex:    <https://example.org/nuremberg/> .
+@prefix cg:    <https://w3id.org/cartograph#> .
+@prefix cgp:   <https://w3id.org/cartograph-provenance#> .
+@prefix geo:   <http://www.opengis.net/ont/geosparql#> .
+@prefix prov:  <http://www.w3.org/ns/prov#> .
+@prefix dct:   <http://purl.org/dc/terms/> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+
+################################################################################
+# Plans & Portrayal Specifications (PROV-O Plans)
+################################################################################
+
+ex:rule_primary_road_z17 a cgp:PortrayalRule, prov:Plan ;
+    rdfs:label "Primary Road Style Rule z17" ;
+    rdfs:comment "Specifies 7px casing stroke and 5px white fill for primary roads." ;
+    dct:source <https://w3id.org/layout-engine/rule/osm-standard-z17/17-styles-z17.rq> .
+
+ex:rule_hospital_symbol_z17 a cgp:PortrayalRule, prov:Plan ;
+    rdfs:label "Hospital Icon Marker Rule z17" ;
+    rdfs:comment "Assigns amenity-hospital icon marker to hospital features." ;
+    dct:source <https://w3id.org/layout-engine/rule/osm-standard-z17/46-poi-styles-z17.rq> .
+
+ex:policy_osm_carto_z17 a cgp:LayoutPolicy, prov:Plan ;
+    rdfs:label "OSM Carto z17 Layout Policy" ;
+    rdfs:comment "Governs label placement, collision rejection, and drawing order." ;
+    dct:source <https://w3id.org/layout-engine/policy/osm-standard-z17/layout-policy.ttl> .
+
+################################################################################
+# Configuration, Resource Set, and Rendering Agents
+################################################################################
+
+ex:config_tile_44758 a cgp:MapConfiguration, prov:Entity ;
+    rdfs:label "Map Configuration for Tile z17/69567/44758" ;
+    cg:zoomLevel 17.0 ;
+    cg:crs "EPSG:3857" ;
+    cg:viewportWkt "<http://www.opengis.net/def/crs/OGC/1.3/CRS84> POLYGON ((11.071472 49.455628, 11.074219 49.455628, 11.074219 49.457413, 11.071472 49.457413, 11.071472 49.455628))"^^geo:wktLiteral .
+
+ex:resource_set_z17 a cgp:ResourceSet, prov:Entity ;
+    rdfs:label "OSM Standard z17 Graphical Resources" ;
+    cgp:pinnedAsset "sha256:font-noto-sans-regular@6a3b" ;
+    cgp:pinnedAsset "sha256:icon-amenity-hospital@2f9c" .
+
+ex:agent_mapnik_agg a prov:Agent, prov:SoftwareAgent ;
+    rdfs:label "Mapnik AGG Rendering Engine" .
+
+ex:agent_cartograph a prov:Agent, prov:SoftwareAgent ;
+    rdfs:label "CartoGraph SPARQL Layout Engine" .
+
+################################################################################
+# Rendered Map Image & Layers
+################################################################################
+
+ex:tile_z17_44758 a cg:MapImage ;
+    rdfs:label "OpenStreetMap Standard Map Tile z17/69567/44758 (Nuremberg)" ;
+    cg:canvasWidthPx 256 ;
+    cg:canvasHeightPx 256 ;
+    cg:zoomLevel 17.0 ;
+    cg:crs "EPSG:3857" ;
+    cg:viewportWkt "<http://www.opengis.net/def/crs/OGC/1.3/CRS84> POLYGON ((11.071472 49.455628, 11.074219 49.455628, 11.074219 49.457413, 11.071472 49.457413, 11.071472 49.455628))"^^geo:wktLiteral ;
+    cg:backgroundColor "#f2efe9" ;
+    cgp:usedPolicy ex:policy_osm_carto_z17 ;
+    cgp:usedConfiguration ex:config_tile_44758 ;
+    cgp:usedResources ex:resource_set_z17 ;
+    prov:wasGeneratedBy ex:render_activity_tile_44758 .
+
+ex:render_activity_tile_44758 a cgp:MapRenderingActivity, prov:Activity ;
+    rdfs:label "Rendering Pass for Tile z17/69567/44758" ;
+    prov:startedAtTime "2026-08-17T14:30:00Z"^^xsd:dateTime ;
+    prov:endedAtTime   "2026-08-17T14:30:01Z"^^xsd:dateTime ;
+    prov:used ex:feat_neutorstrasse, ex:feat_irrerstrasse, ex:feat_lammsgasse,
+              ex:feat_kollisionsgasse, ex:feat_albrecht_duerer_haus,
+              ex:feat_bratwursthaeusle, ex:feat_theresien_krankenhaus,
+              ex:feat_emergency_clinic, ex:feat_frankenschnellweg ;
+    prov:used ex:config_tile_44758 ;
+    prov:used ex:resource_set_z17 ;
+    prov:qualifiedAssociation [
+        a prov:Association ;
+        prov:agent   ex:agent_mapnik_agg ;
+        prov:hadPlan ex:rule_primary_road_z17
+    ] , [
+        a prov:Association ;
+        prov:agent   ex:agent_mapnik_agg ;
+        prov:hadPlan ex:rule_hospital_symbol_z17
+    ] , [
+        a prov:Association ;
+        prov:agent   ex:agent_cartograph ;
+        prov:hadPlan ex:policy_osm_carto_z17
+    ] .
+
+ex:layer_roads a cg:MapLayer ;
+    cg:layerName "roads" ;
+    cg:layerOrder 10 ;
+    cg:inMap ex:tile_z17_44758 .
+
+ex:layer_buildings a cg:MapLayer ;
+    cg:layerName "buildings" ;
+    cg:layerOrder 20 ;
+    cg:inMap ex:tile_z17_44758 .
+
+ex:layer_amenities a cg:MapLayer ;
+    cg:layerName "amenities" ;
+    cg:layerOrder 30 ;
+    cg:inMap ex:tile_z17_44758 .
+
+################################################################################
+# Geospatial Features in Datasource (World Space / OGC CRS84)
+################################################################################
+
+ex:feat_neutorstrasse a geo:Feature, ex:RoadFeature ;
+    cg:featureType "road" ;
+    rdfs:label "Neutorstraße (OSM Way 137191150)" ;
+    ex:osmId "137191150" ;
+    ex:name "Neutorstraße" ;
+    ex:highway "primary" ;
+    ex:surface "asphalt" ;
+    ex:maxspeed "50" ;
+    geo:hasGeometry ex:geom_neutorstrasse .
+
+ex:geom_neutorstrasse a geo:Geometry ;
+    geo:asWKT "<http://www.opengis.net/def/crs/OGC/1.3/CRS84> LINESTRING (11.071841 49.456635, 11.072685 49.456997, 11.073577 49.457381)"^^geo:wktLiteral .
+
+ex:feat_irrerstrasse a geo:Feature, ex:RoadFeature ;
+    cg:featureType "road" ;
+    rdfs:label "Irrerstraße (OSM Way 137191151)" ;
+    ex:osmId "137191151" ;
+    ex:name "Irrerstraße" ;
+    ex:highway "residential" ;
+    ex:surface "cobblestone" ;
+    geo:hasGeometry ex:geom_irrerstrasse .
+
+ex:geom_irrerstrasse a geo:Geometry ;
+    geo:asWKT "<http://www.opengis.net/def/crs/OGC/1.3/CRS84> LINESTRING (11.072685 49.456997, 11.072910 49.456200)"^^geo:wktLiteral .
+
+ex:feat_lammsgasse a geo:Feature, ex:RoadFeature ;
+    cg:featureType "road" ;
+    rdfs:label "Lammsgasse (OSM Way 137191152)" ;
+    ex:osmId "137191152" ;
+    ex:name "Lammsgasse" ;
+    ex:highway "living_street" ;
+    geo:hasGeometry ex:geom_lammsgasse .
+
+ex:geom_lammsgasse a geo:Geometry ;
+    geo:asWKT "<http://www.opengis.net/def/crs/OGC/1.3/CRS84> LINESTRING (11.071841 49.456635, 11.071950 49.455900)"^^geo:wktLiteral .
+
+ex:feat_kollisionsgasse a geo:Feature, ex:RoadFeature ;
+    cg:featureType "road" ;
+    rdfs:label "Kollisionsgasse (OSM Way 137191153)" ;
+    ex:osmId "137191153" ;
+    ex:name "Kollisionsgasse" ;
+    ex:highway "residential" ;
+    geo:hasGeometry ex:geom_kollisionsgasse .
+
+ex:geom_kollisionsgasse a geo:Geometry ;
+    geo:asWKT "<http://www.opengis.net/def/crs/OGC/1.3/CRS84> LINESTRING (11.073000 49.456800, 11.073400 49.456850)"^^geo:wktLiteral .
+
+ex:feat_albrecht_duerer_haus a geo:Feature, ex:BuildingFeature ;
+    cg:featureType "building" ;
+    rdfs:label "Albrecht-Dürer-Haus (OSM Way 2001)" ;
+    ex:osmId "2001" ;
+    ex:name "Albrecht-Dürer-Haus" ;
+    ex:building "historic" ;
+    ex:historic "house" ;
+    ex:wikidata "Q896204" ;
+    ex:elevation 310 ;
+    geo:hasGeometry ex:geom_albrecht_duerer_haus .
+
+ex:geom_albrecht_duerer_haus a geo:Geometry ;
+    geo:asWKT "<http://www.opengis.net/def/crs/OGC/1.3/CRS84> POLYGON ((11.072200 49.457100, 11.072450 49.457100, 11.072450 49.456950, 11.072200 49.456950, 11.072200 49.457100))"^^geo:wktLiteral .
+
+ex:feat_bratwursthaeusle a geo:Feature, ex:AmenityFeature ;
+    cg:featureType "restaurant" ;
+    rdfs:label "Bratwursthäusle (OSM Node 3001)" ;
+    ex:osmId "3001" ;
+    ex:name "Bratwursthäusle" ;
+    ex:amenity "restaurant" ;
+    ex:cuisine "regional" ;
+    geo:hasGeometry ex:geom_bratwursthaeusle .
+
+ex:geom_bratwursthaeusle a geo:Geometry ;
+    geo:asWKT "<http://www.opengis.net/def/crs/OGC/1.3/CRS84> POINT (11.072800 49.456500)"^^geo:wktLiteral .
+
+ex:feat_theresien_krankenhaus a geo:Feature, ex:AmenityFeature ;
+    cg:featureType "hospital" ;
+    rdfs:label "St. Theresien-Krankenhaus (OSM Node 3002)" ;
+    ex:osmId "3002" ;
+    ex:name "St. Theresien-Krankenhaus" ;
+    ex:amenity "hospital" ;
+    geo:hasGeometry ex:geom_theresien_krankenhaus .
+
+ex:geom_theresien_krankenhaus a geo:Geometry ;
+    geo:asWKT "<http://www.opengis.net/def/crs/OGC/1.3/CRS84> POINT (11.073200 49.456100)"^^geo:wktLiteral .
+
+ex:feat_emergency_clinic a geo:Feature, ex:AmenityFeature ;
+    cg:featureType "hospital" ;
+    rdfs:label "Emergency Ambulance Station (OSM Node 3003)" ;
+    ex:osmId "3003" ;
+    ex:amenity "hospital" ;
+    geo:hasGeometry ex:geom_emergency_clinic .
+
+ex:geom_emergency_clinic a geo:Geometry ;
+    geo:asWKT "<http://www.opengis.net/def/crs/OGC/1.3/CRS84> POINT (11.071600 49.457200)"^^geo:wktLiteral .
+
+ex:feat_frankenschnellweg a geo:Feature, ex:MotorwayFeature ;
+    cg:featureType "motorway" ;
+    rdfs:label "Frankenschnellweg A 73 (OSM Way 137191160)" ;
+    ex:osmId "137191160" ;
+    ex:name "Frankenschnellweg" ;
+    ex:ref "A 73" ;
+    ex:highway "motorway" ;
+    geo:hasGeometry ex:geom_frankenschnellweg .
+
+ex:geom_frankenschnellweg a geo:Geometry ;
+    geo:asWKT "<http://www.opengis.net/def/crs/OGC/1.3/CRS84> LINESTRING (11.071500 49.455700, 11.073800 49.457300)"^^geo:wktLiteral .
+
+################################################################################
+# Visible Objects and Canvas DisplayElements with Visual Portrayals
+################################################################################
+
+# ==============================================================================
+# 1. Neutorstraße (Cased Line Road + Curved Text Label)
+# ==============================================================================
+
+ex:vo_neutorstrasse a cg:VisibleObject ;
+    rdfs:label "Visible Neutorstraße" ;
+    cg:inMap ex:tile_z17_44758 ;
+    cg:representsFeature ex:feat_neutorstrasse ;
+    cg:inLayer ex:layer_roads ;
+    cg:featureId "137191150" ;
+    cg:visibleLabel "Neutorstraße" ;
+    cg:visiblePixelCount 1420 ;
+    cg:visiblePixelBbox "[34.4, 4.6, 196.2, 111.5]" ;
+    cg:hasDisplayedElement ex:elem_neutor_casing, ex:elem_neutor_fill, ex:elem_neutor_text_line .
+
+# Two independent LineElements carrying the casing and fill strokes of a cased
+# line. The CasedLinePortrayal is a floating grouping whose components are
+# carried by these two elements, enabling per-stroke pixel attribution and
+# independent visibility (each stroke can be suppressed/occluded on its own).
+ex:elem_neutor_casing a cg:LineElement ;
+    rdfs:label "Neutorstraße casing stroke" ;
+    cg:inMap ex:tile_z17_44758 ;
+    cg:depictsFeature ex:feat_neutorstrasse ;
+    prov:wasGeneratedBy ex:render_activity_tile_44758 ;
+    prov:wasDerivedFrom ex:feat_neutorstrasse ;
+    cgp:usedRule ex:rule_primary_road_z17 ;
+    cg:partOfVisibleObject ex:vo_neutorstrasse ;
+    cg:inLayer ex:layer_roads ;
+    cg:anchorDimension 1 ;
+    cg:placement "line" ;
+    cg:hasAnchorDimension cg:CurveAnchor ;
+    cg:drawOrder 10 ;
+    cg:zIndex 20 ;
+    cg:pixelCount 200 ;
+    cg:isClipped false ;
+    cg:pixelBbox "[34.4, 4.6, 196.2, 111.5]" ;
+    cg:visibilityStatus cg:RenderedComplete ;
+    cg:hasPortrayal ex:stroke_neutor_casing .
+
+ex:elem_neutor_fill a cg:LineElement ;
+    rdfs:label "Neutorstraße fill stroke" ;
+    cg:inMap ex:tile_z17_44758 ;
+    cg:depictsFeature ex:feat_neutorstrasse ;
+    prov:wasGeneratedBy ex:render_activity_tile_44758 ;
+    prov:wasDerivedFrom ex:feat_neutorstrasse ;
+    cgp:usedRule ex:rule_primary_road_z17 ;
+    cg:partOfVisibleObject ex:vo_neutorstrasse ;
+    cg:inLayer ex:layer_roads ;
+    cg:anchorDimension 1 ;
+    cg:placement "line" ;
+    cg:hasAnchorDimension cg:CurveAnchor ;
+    cg:drawOrder 11 ;
+    cg:zIndex 21 ;
+    cg:pixelCount 1070 ;
+    cg:isClipped false ;
+    cg:pixelBbox "[34.4, 4.6, 196.2, 111.5]" ;
+    cg:visibilityStatus cg:RenderedComplete ;
+    cg:hasPortrayal ex:stroke_neutor_fill .
+
+ex:portrayal_neutor_cased_line a cg:CasedLinePortrayal ;
+    rdfs:label "Neutorstraße cased line portrayal" ;
+    cg:hasCasingStroke ex:stroke_neutor_casing ;
+    cg:hasFillStroke ex:stroke_neutor_fill ;
+    cg:hasComponent ex:stroke_neutor_casing, ex:stroke_neutor_fill .
+
+ex:stroke_neutor_casing a cg:StrokePortrayal ;
+    rdfs:label "Neutorstraße outer casing stroke" ;
+    cg:strokeColor "#c2b8ac" ;
+    cg:strokeWidthPx 7.0 .
+
+ex:stroke_neutor_fill a cg:StrokePortrayal ;
+    rdfs:label "Neutorstraße inner fill stroke" ;
+    cg:strokeColor "#ffffff" ;
+    cg:strokeWidthPx 5.0 .
+
+# 1D LineElement carrying a TextPortrayal (Curved text along street)
+ex:elem_neutor_text_line a cg:LineElement ;
+    rdfs:label "Neutorstraße curved text label line" ;
+    cg:inMap ex:tile_z17_44758 ;
+    cg:depictsFeature ex:feat_neutorstrasse ;
+    cg:partOfVisibleObject ex:vo_neutorstrasse ;
+    cg:inLayer ex:layer_roads ;
+    cg:anchorDimension 1 ;
+    cg:placement "line" ;
+    cg:hasAnchorDimension cg:CurveAnchor ;
+    cg:drawOrder 85 ;
+    cg:zIndex 50 ;
+    cg:pixelCount 150 ;
+    cg:isClipped false ;
+    cg:pixelBbox "[88.0, 95.0, 167.0, 105.0]" ;
+    cg:visibilityStatus cg:RenderedComplete ;
+    cg:hasPortrayal ex:portrayal_neutor_label .
+
+ex:portrayal_neutor_label a cg:TextPortrayal ;
+    rdfs:label "Neutorstraße text portrayal" ;
+    cg:renderedText "Neutorstraße" ;
+    cg:fontFamily "Noto Sans Regular" ;
+    cg:fontSizePx 10.0 ;
+    cg:textColor "#000000" ;
+    cg:haloColor "#ffffff" ;
+    cg:haloRadiusPx 2.0 .
+
+# ==============================================================================
+# 2. Irrerstraße (Line Stroke + Text Label)
+# ==============================================================================
+
+ex:vo_irrerstrasse a cg:VisibleObject ;
+    rdfs:label "Visible Irrerstraße" ;
+    cg:inMap ex:tile_z17_44758 ;
+    cg:representsFeature ex:feat_irrerstrasse ;
+    cg:inLayer ex:layer_roads ;
+    cg:featureId "137191151" ;
+    cg:visibleLabel "Irrerstraße" ;
+    cg:visiblePixelCount 680 ;
+    cg:visiblePixelBbox "[113.0, 59.0, 150.0, 180.0]" ;
+    cg:hasDisplayedElement ex:elem_irrer_road_line, ex:elem_irrer_text_line .
+
+ex:elem_irrer_road_line a cg:LineElement ;
+    rdfs:label "Irrerstraße road line" ;
+    cg:inMap ex:tile_z17_44758 ;
+    cg:depictsFeature ex:feat_irrerstrasse ;
+    cg:partOfVisibleObject ex:vo_irrerstrasse ;
+    cg:inLayer ex:layer_roads ;
+    cg:anchorDimension 1 ;
+    cg:placement "line" ;
+    cg:hasAnchorDimension cg:CurveAnchor ;
+    cg:drawOrder 16 ;
+    cg:zIndex 20 ;
+    cg:pixelCount 560 ;
+    cg:isClipped false ;
+    cg:visibilityStatus cg:RenderedComplete ;
+    cg:hasPortrayal [ a cg:StrokePortrayal ; cg:strokeColor "#ffffff" ; cg:strokeWidthPx 3.5 ] .
+
+ex:elem_irrer_text_line a cg:LineElement ;
+    rdfs:label "Irrerstraße text label line" ;
+    cg:inMap ex:tile_z17_44758 ;
+    cg:depictsFeature ex:feat_irrerstrasse ;
+    cg:partOfVisibleObject ex:vo_irrerstrasse ;
+    cg:inLayer ex:layer_roads ;
+    cg:anchorDimension 1 ;
+    cg:placement "line" ;
+    cg:hasAnchorDimension cg:CurveAnchor ;
+    cg:drawOrder 86 ;
+    cg:zIndex 50 ;
+    cg:pixelCount 120 ;
+    cg:isClipped false ;
+    cg:visibilityStatus cg:RenderedComplete ;
+    cg:hasPortrayal [
+        a cg:TextPortrayal ;
+        cg:renderedText "Irrerstraße" ;
+        cg:fontFamily "Noto Sans Regular" ;
+        cg:fontSizePx 9.0 ;
+        cg:textColor "#000000" ;
+        cg:haloColor "#ffffff" ;
+        cg:haloRadiusPx 2.0
+    ] .
+
+# ==============================================================================
+# 3. Lammsgasse (Line Stroke + Text Label)
+# ==============================================================================
+
+ex:vo_lammsgasse a cg:VisibleObject ;
+    rdfs:label "Visible Lammsgasse" ;
+    cg:inMap ex:tile_z17_44758 ;
+    cg:representsFeature ex:feat_lammsgasse ;
+    cg:inLayer ex:layer_roads ;
+    cg:featureId "137191152" ;
+    cg:visibleLabel "Lammsgasse" ;
+    cg:visiblePixelCount 420 ;
+    cg:visiblePixelBbox "[34.0, 111.0, 60.0, 210.0]" ;
+    cg:hasDisplayedElement ex:elem_lamm_road_line, ex:elem_lamm_text_line .
+
+ex:elem_lamm_road_line a cg:LineElement ;
+    rdfs:label "Lammsgasse road line" ;
+    cg:inMap ex:tile_z17_44758 ;
+    cg:depictsFeature ex:feat_lammsgasse ;
+    cg:partOfVisibleObject ex:vo_lammsgasse ;
+    cg:inLayer ex:layer_roads ;
+    cg:anchorDimension 1 ;
+    cg:placement "line" ;
+    cg:hasAnchorDimension cg:CurveAnchor ;
+    cg:drawOrder 17 ;
+    cg:zIndex 20 ;
+    cg:pixelCount 330 ;
+    cg:isClipped false ;
+    cg:visibilityStatus cg:RenderedComplete ;
+    cg:hasPortrayal [ a cg:StrokePortrayal ; cg:strokeColor "#ffffff" ; cg:strokeWidthPx 3.0 ] .
+
+ex:elem_lamm_text_line a cg:LineElement ;
+    rdfs:label "Lammsgasse text label line" ;
+    cg:inMap ex:tile_z17_44758 ;
+    cg:depictsFeature ex:feat_lammsgasse ;
+    cg:partOfVisibleObject ex:vo_lammsgasse ;
+    cg:inLayer ex:layer_roads ;
+    cg:anchorDimension 1 ;
+    cg:placement "line" ;
+    cg:hasAnchorDimension cg:CurveAnchor ;
+    cg:drawOrder 87 ;
+    cg:zIndex 50 ;
+    cg:pixelCount 90 ;
+    cg:isClipped false ;
+    cg:visibilityStatus cg:RenderedComplete ;
+    cg:hasPortrayal [
+        a cg:TextPortrayal ;
+        cg:renderedText "Lammsgasse" ;
+        cg:fontFamily "Noto Sans Regular" ;
+        cg:fontSizePx 9.0 ;
+        cg:textColor "#000000"
+    ] .
+
+# ==============================================================================
+# 4. Kollisionsgasse (Road stroke rendered, but text label SUPPRESSED in collision)
+# ==============================================================================
+
+ex:vo_kollisionsgasse a cg:VisibleObject ;
+    rdfs:label "Visible Kollisionsgasse (No visible label)" ;
+    cg:inMap ex:tile_z17_44758 ;
+    cg:representsFeature ex:feat_kollisionsgasse ;
+    cg:inLayer ex:layer_roads ;
+    cg:featureId "137191153" ;
+    cg:visiblePixelCount 220 ;
+    cg:visiblePixelBbox "[140.0, 100.0, 185.0, 104.0]" ;
+    cg:hasDisplayedElement ex:elem_kollision_road_line .
+
+ex:elem_kollision_road_line a cg:LineElement ;
+    rdfs:label "Kollisionsgasse road line" ;
+    cg:inMap ex:tile_z17_44758 ;
+    cg:depictsFeature ex:feat_kollisionsgasse ;
+    cg:partOfVisibleObject ex:vo_kollisionsgasse ;
+    cg:inLayer ex:layer_roads ;
+    cg:anchorDimension 1 ;
+    cg:placement "line" ;
+    cg:hasAnchorDimension cg:CurveAnchor ;
+    cg:drawOrder 18 ;
+    cg:zIndex 20 ;
+    cg:pixelCount 220 ;
+    cg:isClipped false ;
+    cg:visibilityStatus cg:RenderedComplete ;
+    cg:hasPortrayal [ a cg:StrokePortrayal ; cg:strokeColor "#ffffff" ; cg:strokeWidthPx 3.0 ] .
+
+# ==============================================================================
+# 5. Albrecht-Dürer-Haus (2D Polygon Surface with ComposedSurfacePortrayal)
+# ==============================================================================
+
+ex:vo_albrecht_duerer_haus a cg:VisibleObject ;
+    rdfs:label "Visible Albrecht-Dürer-Haus" ;
+    cg:inMap ex:tile_z17_44758 ;
+    cg:representsFeature ex:feat_albrecht_duerer_haus ;
+    cg:inLayer ex:layer_buildings ;
+    cg:featureId "2001" ;
+    cg:visibleLabel "Albrecht-Dürer-Haus" ;
+    cg:visiblePixelCount 1150 ;
+    cg:visiblePixelBbox "[70.0, 40.0, 110.0, 75.0]" ;
+    cg:hasDisplayedElement ex:elem_albrecht_poly, ex:elem_albrecht_label_point .
+
+# 2D Polygon carrying a ComposedSurfacePortrayal (Fill + Boundary Stroke)
+ex:elem_albrecht_poly a cg:PolygonElement ;
+    rdfs:label "Albrecht-Dürer-Haus building surface" ;
+    cg:inMap ex:tile_z17_44758 ;
+    cg:depictsFeature ex:feat_albrecht_duerer_haus ;
+    cg:partOfVisibleObject ex:vo_albrecht_duerer_haus ;
+    cg:inLayer ex:layer_buildings ;
+    cg:anchorDimension 2 ;
+    cg:placement "area" ;
+    cg:hasAnchorDimension cg:SurfaceAnchor ;
+    cg:drawOrder 25 ;
+    cg:zIndex 2 ;
+    cg:pixelCount 1050 ;
+    cg:isClipped false ;
+    cg:pixelBbox "[70.0, 40.0, 110.0, 75.0]" ;
+    cg:visibilityStatus cg:RenderedComplete ;
+    cg:hasPortrayal ex:portrayal_albrecht_surface .
+
+ex:portrayal_albrecht_surface a cg:ComposedSurfacePortrayal ;
+    rdfs:label "Albrecht-Dürer-Haus surface portrayal" ;
+    cg:hasFillComponent [ a cg:FillPortrayal ; cg:fillColor "#d9d0c9" ; cg:opacity 1.0 ] ;
+    cg:hasBoundaryStroke [ a cg:StrokePortrayal ; cg:strokeColor "#c2b8ac" ; cg:strokeWidthPx 1.0 ] ;
+    cg:hasComponent [ a cg:FillPortrayal ; cg:fillColor "#d9d0c9" ; cg:opacity 1.0 ],
+                    [ a cg:StrokePortrayal ; cg:strokeColor "#c2b8ac" ; cg:strokeWidthPx 1.0 ] .
+
+# Centroid spot text label (0D PointElement carrying TextPortrayal)
+ex:elem_albrecht_label_point a cg:PointElement ;
+    rdfs:label "Albrecht-Dürer-Haus centroid label" ;
+    cg:inMap ex:tile_z17_44758 ;
+    cg:depictsFeature ex:feat_albrecht_duerer_haus ;
+    cg:partOfVisibleObject ex:vo_albrecht_duerer_haus ;
+    cg:inLayer ex:layer_buildings ;
+    cg:anchorDimension 0 ;
+    cg:placement "point" ;
+    cg:hasAnchorDimension cg:PointAnchor ;
+    cg:pixelAnchorX 90.0 ;
+    cg:pixelAnchorY 57.5 ;
+    cg:drawOrder 90 ;
+    cg:zIndex 50 ;
+    cg:pixelCount 100 ;
+    cg:isClipped false ;
+    cg:visibilityStatus cg:RenderedComplete ;
+    cg:hasPortrayal [
+        a cg:TextPortrayal ;
+        cg:renderedText "Albrecht-Dürer-Haus" ;
+        cg:fontFamily "Noto Sans Regular" ;
+        cg:fontSizePx 8.5 ;
+        cg:textColor "#444444" ;
+        cg:haloColor "#ffffff" ;
+        cg:haloRadiusPx 1.0
+    ] .
+
+# ==============================================================================
+# 6. Bratwursthäusle (0D PointElement with MarkerPortrayal)
+# ==============================================================================
+
+ex:vo_bratwursthaeusle a cg:VisibleObject ;
+    rdfs:label "Visible Bratwursthäusle POI" ;
+    cg:inMap ex:tile_z17_44758 ;
+    cg:representsFeature ex:feat_bratwursthaeusle ;
+    cg:inLayer ex:layer_amenities ;
+    cg:featureId "3001" ;
+    cg:visiblePixelCount 256 ;
+    cg:visiblePixelBbox "[105.0, 138.0, 120.0, 152.0]" ;
+    cg:hasDisplayedElement ex:elem_bratwurst_marker .
+
+ex:elem_bratwurst_marker a cg:PointElement ;
+    rdfs:label "Bratwursthäusle restaurant icon marker" ;
+    cg:inMap ex:tile_z17_44758 ;
+    cg:depictsFeature ex:feat_bratwursthaeusle ;
+    cg:partOfVisibleObject ex:vo_bratwursthaeusle ;
+    cg:inLayer ex:layer_amenities ;
+    cg:anchorDimension 0 ;
+    cg:placement "point" ;
+    cg:hasAnchorDimension cg:PointAnchor ;
+    cg:drawOrder 95 ;
+    cg:zIndex 10 ;
+    cg:pixelAnchorX 112.5 ;
+    cg:pixelAnchorY 145.0 ;
+    cg:pixelCount 256 ;
+    cg:isClipped false ;
+    cg:pixelBbox "[105.0, 138.0, 120.0, 152.0]" ;
+    cg:visibilityStatus cg:RenderedComplete ;
+    cg:hasPortrayal [ a cg:MarkerPortrayal ; cg:iconName "amenity-restaurant" ] .
+
+# ==============================================================================
+# 7. St. Theresien-Krankenhaus (0D Point with MarkerPortrayal + Spot TextPortrayal)
+# ==============================================================================
+
+ex:vo_theresien_krankenhaus a cg:VisibleObject ;
+    rdfs:label "Visible St. Theresien-Krankenhaus" ;
+    cg:inMap ex:tile_z17_44758 ;
+    cg:representsFeature ex:feat_theresien_krankenhaus ;
+    cg:inLayer ex:layer_amenities ;
+    cg:featureId "3002" ;
+    cg:visibleLabel "St. Theresien-Krankenhaus" ;
+    cg:visiblePixelCount 376 ;
+    cg:visiblePixelBbox "[150.0, 180.0, 210.0, 205.0]" ;
+    cg:hasDisplayedElement ex:elem_hospital_marker, ex:elem_hospital_label .
+
+ex:elem_hospital_marker a cg:PointElement ;
+    rdfs:label "St. Theresien-Krankenhaus hospital icon marker" ;
+    cg:inMap ex:tile_z17_44758 ;
+    cg:depictsFeature ex:feat_theresien_krankenhaus ;
+    prov:wasGeneratedBy ex:render_activity_tile_44758 ;
+    prov:wasDerivedFrom ex:feat_theresien_krankenhaus ;
+    cgp:usedRule ex:rule_hospital_symbol_z17 ;
+    cg:partOfVisibleObject ex:vo_theresien_krankenhaus ;
+    cg:inLayer ex:layer_amenities ;
+    cg:anchorDimension 0 ;
+    cg:placement "point" ;
+    cg:hasAnchorDimension cg:PointAnchor ;
+    cg:drawOrder 96 ;
+    cg:zIndex 10 ;
+    cg:pixelAnchorX 160.0 ;
+    cg:pixelAnchorY 190.0 ;
+    cg:pixelCount 256 ;
+    cg:isClipped false ;
+    cg:pixelBbox "[152.0, 182.0, 168.0, 198.0]" ;
+    cg:visibilityStatus cg:RenderedComplete ;
+    cg:hasPortrayal [ a cg:MarkerPortrayal ; cg:iconName "amenity-hospital" ] .
+
+ex:elem_hospital_label a cg:PointElement ;
+    rdfs:label "St. Theresien-Krankenhaus label" ;
+    cg:inMap ex:tile_z17_44758 ;
+    cg:depictsFeature ex:feat_theresien_krankenhaus ;
+    cg:partOfVisibleObject ex:vo_theresien_krankenhaus ;
+    cg:inLayer ex:layer_amenities ;
+    cg:anchorDimension 0 ;
+    cg:placement "point" ;
+    cg:hasAnchorDimension cg:PointAnchor ;
+    cg:pixelAnchorX 170.0 ;
+    cg:pixelAnchorY 192.0 ;
+    cg:drawOrder 97 ;
+    cg:zIndex 50 ;
+    cg:pixelCount 120 ;
+    cg:isClipped false ;
+    cg:visibilityStatus cg:RenderedComplete ;
+    cg:hasPortrayal [
+        a cg:TextPortrayal ;
+        cg:renderedText "St. Theresien-Krankenhaus" ;
+        cg:fontFamily "Noto Sans Regular" ;
+        cg:fontSizePx 8.5 ;
+        cg:textColor "#734a08"
+    ] .
+
+# ==============================================================================
+# 8. Emergency Ambulance Station (Hospital icon marker ONLY, no text label rendered)
+# ==============================================================================
+
+ex:vo_emergency_clinic a cg:VisibleObject ;
+    rdfs:label "Visible Emergency Ambulance Station (Icon only)" ;
+    cg:inMap ex:tile_z17_44758 ;
+    cg:representsFeature ex:feat_emergency_clinic ;
+    cg:inLayer ex:layer_amenities ;
+    cg:featureId "3003" ;
+    cg:visiblePixelCount 256 ;
+    cg:visiblePixelBbox "[20.0, 15.0, 36.0, 31.0]" ;
+    cg:hasDisplayedElement ex:elem_emergency_marker .
+
+ex:elem_emergency_marker a cg:PointElement ;
+    rdfs:label "Emergency station hospital icon marker" ;
+    cg:inMap ex:tile_z17_44758 ;
+    cg:depictsFeature ex:feat_emergency_clinic ;
+    cg:partOfVisibleObject ex:vo_emergency_clinic ;
+    cg:inLayer ex:layer_amenities ;
+    cg:anchorDimension 0 ;
+    cg:placement "point" ;
+    cg:hasAnchorDimension cg:PointAnchor ;
+    cg:drawOrder 98 ;
+    cg:zIndex 10 ;
+    cg:pixelAnchorX 28.0 ;
+    cg:pixelAnchorY 23.0 ;
+    cg:pixelCount 256 ;
+    cg:isClipped false ;
+    cg:pixelBbox "[20.0, 15.0, 36.0, 31.0]" ;
+    cg:visibilityStatus cg:RenderedComplete ;
+    cg:hasPortrayal [ a cg:MarkerPortrayal ; cg:iconName "amenity-hospital" ] .
+
+# ==============================================================================
+# 9. Frankenschnellweg A 73 (0D PointElement with Compound ShieldPortrayal)
+# ==============================================================================
+
+ex:vo_frankenschnellweg a cg:VisibleObject ;
+    rdfs:label "Visible Frankenschnellweg A 73" ;
+    cg:inMap ex:tile_z17_44758 ;
+    cg:representsFeature ex:feat_frankenschnellweg ;
+    cg:inLayer ex:layer_roads ;
+    cg:featureId "137191160" ;
+    cg:visibleLabel "A 73" ;
+    cg:visiblePixelCount 320 ;
+    cg:visiblePixelBbox "[130.0, 75.0, 158.0, 95.0]" ;
+    cg:hasDisplayedElement ex:elem_motorway_shield .
+
+ex:elem_motorway_shield a cg:PointElement ;
+    rdfs:label "Highway A 73 shield element" ;
+    cg:inMap ex:tile_z17_44758 ;
+    cg:depictsFeature ex:feat_frankenschnellweg ;
+    cg:partOfVisibleObject ex:vo_frankenschnellweg ;
+    cg:inLayer ex:layer_roads ;
+    cg:anchorDimension 0 ;
+    cg:placement "point" ;
+    cg:hasAnchorDimension cg:PointAnchor ;
+    cg:pixelAnchorX 144.0 ;
+    cg:pixelAnchorY 85.0 ;
+    cg:drawOrder 99 ;
+    cg:zIndex 60 ;
+    cg:pixelCount 320 ;
+    cg:isClipped false ;
+    cg:pixelBbox "[130.0, 75.0, 158.0, 95.0]" ;
+    cg:visibilityStatus cg:RenderedComplete ;
+    cg:hasPortrayal ex:portrayal_a73_shield .
+
+ex:portrayal_a73_shield a cg:ShieldPortrayal ;
+    rdfs:label "Motorway A 73 shield compound portrayal" ;
+    cg:hasIconComponent [ a cg:MarkerPortrayal ; cg:iconName "shield-motorway-blue" ] ;
+    cg:hasTextComponent [ a cg:TextPortrayal ; cg:renderedText "A 73" ; cg:fontSizePx 8.0 ; cg:textColor "#ffffff" ] ;
+    cg:hasComponent [ a cg:MarkerPortrayal ; cg:iconName "shield-motorway-blue" ],
+                    [ a cg:TextPortrayal ; cg:renderedText "A 73" ; cg:fontSizePx 8.0 ; cg:textColor "#ffffff" ] .

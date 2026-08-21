@@ -1,0 +1,14 @@
+# Why is something not on the map? Needs a graph built with --candidates.
+# Non-surviving occurrences are cg:CandidateElement but never cg:DisplayElement,
+# so they can never be mistaken for something visible.
+PREFIX cg: <https://w3id.org/cartograph#>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+SELECT ?reason (COUNT(?candidate) AS ?occurrences) WHERE {
+  ?candidate a cg:CandidateElement ;
+             cg:visibilityStatus ?status .
+  FILTER NOT EXISTS { ?candidate a cg:DisplayElement }
+  ?status skos:prefLabel ?reason .
+}
+GROUP BY ?reason
+ORDER BY DESC(?occurrences)

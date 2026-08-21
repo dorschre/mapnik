@@ -1,0 +1,17 @@
+PREFIX cg:   <https://w3id.org/cartograph#>
+PREFIX cgp:  <https://w3id.org/cartograph-provenance#>
+PREFIX geo:  <http://www.opengis.net/ont/geosparql#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX ex:   <https://example.org/nuremberg/>
+
+# CQ10: Provenance traceability — Retrieve display elements, source features, and the portrayal rule plans that justified them
+SELECT ?element ?feature ?rulePlan ?ruleLabel WHERE {
+  ?element cg:inMap ex:tile_z17_44758 ;
+           cg:depictsFeature ?feature ;
+           prov:wasDerivedFrom ?feature ;
+           cgp:usedRule ?rulePlan .
+  ?rulePlan a prov:Plan ;
+            rdfs:label ?ruleLabel .
+}
+ORDER BY ?element

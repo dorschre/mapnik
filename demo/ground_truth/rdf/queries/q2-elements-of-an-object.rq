@@ -1,0 +1,15 @@
+# One source feature, several graphical occurrences: casing, fill and label are
+# separate display elements of a single visible object. Mirrors CQ2.
+PREFIX cg: <https://w3id.org/cartograph#>
+
+SELECT ?label ?element ?kind ?dimension ?drawOrder ?pixels WHERE {
+  ?object a cg:VisibleObject ;
+          cg:visibleLabel ?label ;
+          cg:hasDisplayedElement ?element .
+  ?element cg:drawOrder ?drawOrder ;
+           cg:pixelCount ?pixels ;
+           cg:anchorDimension ?dimension ;
+           cg:hasPortrayal ?portrayal .
+  ?portrayal a ?kind .
+}
+ORDER BY ?label ?drawOrder

@@ -1,0 +1,22 @@
+@prefix cg:  <https://w3id.org/cartograph#> .
+@prefix geo: <http://www.opengis.net/ont/geosparql#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex:  <https://example.org/nuremberg/> .
+
+# A bare non-surviving candidate: no visible pixels, no portrayal, but it
+# still depicts its source feature (that is the whole point of a candidate).
+ex:sup_road_candidate a cg:CandidateElement ;
+    cg:inMap ex:map ;
+    cg:depictsFeature ex:f ;
+    cg:drawOrder 5 ;
+    cg:isClipped false ;
+    cg:visibilityStatus cg:Suppressed ;
+    cg:pixelCount 0 .
+
+ex:map a cg:MapImage ;
+    cg:canvasWidthPx 256 ;
+    cg:canvasHeightPx 256 ;
+    cg:crs "EPSG:3857" ;
+    cg:viewportWkt "POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))"^^geo:wktLiteral .
+
+ex:f a geo:Feature .

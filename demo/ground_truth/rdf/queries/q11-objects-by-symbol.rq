@@ -1,0 +1,9 @@
+# Which objects are shown with which icon? Mirrors CQ7.
+PREFIX cg: <https://w3id.org/cartograph#>
+
+SELECT ?icon (COUNT(DISTINCT ?object) AS ?objects) WHERE {
+  ?element cg:hasPortrayal [ a cg:MarkerPortrayal ; cg:iconName ?icon ] ;
+           cg:partOfVisibleObject ?object .
+}
+GROUP BY ?icon
+ORDER BY DESC(?objects)

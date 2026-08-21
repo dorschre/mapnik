@@ -1,0 +1,20 @@
+PREFIX cg:   <https://w3id.org/cartograph#>
+PREFIX cgp:  <https://w3id.org/cartograph-provenance#>
+PREFIX geo:  <http://www.opengis.net/ont/geosparql#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX ex:   <https://example.org/nuremberg/>
+
+# CQ9: Retrieve all compound portrayals, their concrete subtypes, and constituent components.
+# A compound may be attached to an element directly (shield, composed surface) OR be a
+# floating grouping whose components are carried by separate elements (cased line).
+SELECT ?element ?compoundPortrayal ?compoundType ?component ?componentType WHERE {
+  ?element cg:inMap ex:tile_z17_44758 ;
+           cg:hasPortrayal ?portrayal .
+  ?compoundPortrayal a ?compoundType ;
+                     cg:hasComponent ?component .
+  ?component a ?componentType .
+  FILTER(?portrayal = ?compoundPortrayal || ?portrayal = ?component)
+  FILTER(?compoundType != cg:Portrayal && ?compoundType != cg:CompoundPortrayal)
+  FILTER(?componentType != cg:Portrayal)
+}
+ORDER BY ?element ?componentType

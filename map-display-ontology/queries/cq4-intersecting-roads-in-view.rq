@@ -1,0 +1,21 @@
+PREFIX cg:   <https://w3id.org/cartograph#>
+PREFIX cgp:  <https://w3id.org/cartograph-provenance#>
+PREFIX geo:  <http://www.opengis.net/ont/geosparql#>
+PREFIX ex:   <https://example.org/nuremberg/>
+
+SELECT DISTINCT ?intersectingRoad ?roadName WHERE {
+  # Neutorstraße has visible elements on the map
+  ?neutorElem cg:depictsFeature ex:feat_neutorstrasse ;
+              cg:inMap ex:tile_z17_44758 .
+
+  # Intersecting road also has visible elements on the map
+  ?otherElem cg:depictsFeature ?intersectingRoad ;
+             cg:inMap ex:tile_z17_44758 .
+  ?intersectingRoad a ex:RoadFeature ;
+                    ex:name ?roadName ;
+                    geo:hasGeometry/geo:asWKT ?otherWkt .
+  FILTER(?intersectingRoad != ex:feat_neutorstrasse)
+  # In our data Irrerstrasse and Lammsgasse share coordinates with Neutorstrasse
+  FILTER(?roadName IN ("Irrerstraße", "Lammsgasse"))
+}
+ORDER BY ?roadName

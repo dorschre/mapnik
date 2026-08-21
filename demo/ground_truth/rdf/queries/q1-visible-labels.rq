@@ -1,0 +1,13 @@
+# Every text that is actually readable on the map, with the feature it names.
+# Mirrors CQ3, without hard-coding a map or a feature class.
+PREFIX cg: <https://w3id.org/cartograph#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?label ?layer ?featureId ?pixels WHERE {
+  ?object a cg:VisibleObject ;
+          cg:visibleLabel ?label ;
+          cg:featureId ?featureId ;
+          cg:visiblePixelCount ?pixels ;
+          cg:inLayer [ cg:layerName ?layer ] .
+}
+ORDER BY DESC(?pixels)

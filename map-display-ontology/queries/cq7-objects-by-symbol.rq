@@ -1,0 +1,25 @@
+PREFIX cg:   <https://w3id.org/cartograph#>
+PREFIX cgp:  <https://w3id.org/cartograph-provenance#>
+PREFIX geo:  <http://www.opengis.net/ont/geosparql#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX ex:   <https://example.org/nuremberg/>
+
+# CQ7: Retrieve all objects and optionally their names that use the symbol "hospital"
+SELECT ?visibleObject ?feature ?element ?iconName ?visibleLabel ?sourceName WHERE {
+  ?element cg:inMap ex:tile_z17_44758 ;
+           cg:depictsFeature ?feature ;
+           cg:hasPortrayal ?portrayal .
+  ?portrayal a cg:MarkerPortrayal ;
+             cg:iconName ?iconName .
+  FILTER(CONTAINS(?iconName, "hospital") || CONTAINS(?iconName, "ambulance"))
+
+  OPTIONAL {
+    ?element cg:partOfVisibleObject ?visibleObject .
+    OPTIONAL { ?visibleObject cg:visibleLabel ?visibleLabel . }
+  }
+
+  OPTIONAL {
+    ?feature ex:name ?sourceName .
+  }
+}
+ORDER BY ?element

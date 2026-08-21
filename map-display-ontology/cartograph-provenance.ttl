@@ -1,0 +1,114 @@
+@prefix cgp:    <https://w3id.org/cartograph-provenance#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix geo:    <http://www.opengis.net/ont/geosparql#> .
+@prefix prov:   <http://www.w3.org/ns/prov#> .
+@prefix dct:    <http://purl.org/dc/terms/> .
+
+<https://w3id.org/cartograph-provenance>
+    a owl:Ontology ;
+    dct:title "CartoGraph Provenance Vocabulary" ;
+    dct:description """The provenance and production vocabulary of the CartoGraph map-display ontology.
+
+Models the map-production lifecycle aligned to W3C PROV-O: the plans that govern it (portrayal rules, layout policy), the input entities it consumes (map configuration, resource sets), the four production activities (rule application f_rule, layout resolution f_resolve, map rendering f_render, answer derivation q_j), and the generation/usage properties linking them.
+
+Also declares the feature-derivation root property cgp:derivedFromFeature, a specialization of prov:wasDerivedFrom for any entity whose data derives from a geo:Feature. The representation vocabulary (https://w3id.org/cartograph#) specializes this root into cg:depictsFeature and cg:representsFeature.""" ;
+    dct:creator "Rene Dorsch" ;
+    dct:created "2026-08-17"^^xsd:date ;
+    dct:modified "2026-08-19"^^xsd:date ;
+    dct:license <https://creativecommons.org/licenses/by/4.0/> ;
+    owl:versionInfo "2.0.0" ;
+    owl:imports <http://www.w3.org/ns/prov#> .
+
+################################################################################
+# Feature-Derivation Root (specialized by the representation vocabulary)
+################################################################################
+
+cgp:derivedFromFeature a owl:ObjectProperty ;
+    rdfs:subPropertyOf prov:wasDerivedFrom ;
+    rdfs:label "derived from feature" ;
+    rdfs:range geo:Feature ;
+    rdfs:comment "Any entity whose data derives from a geo:Feature. Broader than the representation predicates cg:depictsFeature / cg:representsFeature: it also covers non-visual derivations (e.g. a CRS-transformed geometry that is never shown on canvas)." .
+
+################################################################################
+# Plans & Input Entities
+################################################################################
+
+cgp:PortrayalRule a owl:Class ;
+    rdfs:subClassOf prov:Plan, prov:Entity ;
+    rdfs:label "Portrayal rule" ;
+    rdfs:comment "A declarative plan (e.g. SPARQL construct query, Mapnik style rule, SLD rule) that selects source features and specifies their symbolization and expected graphical elements (the R input in the three-stage model)." .
+
+cgp:LayoutPolicy a owl:Class ;
+    rdfs:subClassOf prov:Plan, prov:Entity ;
+    rdfs:label "Layout policy" ;
+    rdfs:comment "An algorithmic plan governing placement, label collision detection, drawing priority, and boundary clipping constraints (the L input in the three-stage model)." .
+
+cgp:MapConfiguration a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Map configuration" ;
+    rdfs:comment "A specification entity recording map extent, zoom level, projection/CRS, and target output dimensions (the O input in the three-stage model)." .
+
+cgp:ResourceSet a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Resource set" ;
+    rdfs:comment "A collection entity of pinned graphical assets (fonts, icon bitmaps, SVG symbols) whose geometric metrics determine placement and collision space (the X input in the three-stage model)." .
+
+cgp:ReferenceAnswer a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Reference answer" ;
+    rdfs:comment "A gold reference answer entity derived by evaluating a benchmark question query (q_j) over the final map content graph." .
+
+################################################################################
+# Production & Derivation Activities
+################################################################################
+
+cgp:RuleApplicationActivity a owl:Class ;
+    rdfs:subClassOf prov:Activity ;
+    rdfs:label "Rule application activity" ;
+    rdfs:comment "The activity (f_rule) applying portrayal rules to source features independently to generate candidate display elements (expected map content S_E)." .
+
+cgp:LayoutResolutionActivity a owl:Class ;
+    rdfs:subClassOf prov:Activity ;
+    rdfs:label "Layout resolution activity" ;
+    rdfs:comment "The activity (f_resolve) executing layout policy and collision detection against candidate display elements to produce final map content (S_F)." .
+
+cgp:MapRenderingActivity a owl:Class ;
+    rdfs:subClassOf prov:Activity ;
+    rdfs:label "Map rendering activity" ;
+    rdfs:comment "The activity (f_render) rasterizing/drawing resolved display elements and graphical resources into the final map image artifact (M)." .
+
+cgp:AnswerDerivationActivity a owl:Class ;
+    rdfs:subClassOf prov:Activity ;
+    rdfs:label "Answer derivation activity" ;
+    rdfs:comment "The activity executing a question-specific query (q_j) over the final map content to derive an evidence-linked reference answer." .
+
+################################################################################
+# Generation & Usage Properties
+################################################################################
+
+cgp:usedRule a owl:ObjectProperty ;
+    rdfs:label "used rule" ;
+    rdfs:range cgp:PortrayalRule ;
+    rdfs:comment "Links a display element, visible object, or activity to the portrayal rule (prov:Plan) that justified and symbolized it." .
+
+cgp:usedPolicy a owl:ObjectProperty ;
+    rdfs:label "used policy" ;
+    rdfs:range cgp:LayoutPolicy ;
+    rdfs:comment "Links a map image or layout activity to the layout policy (prov:Plan) that governed placement and collision." .
+
+cgp:usedResources a owl:ObjectProperty ;
+    rdfs:label "used resources" ;
+    rdfs:range cgp:ResourceSet ;
+    rdfs:comment "Links a map image or layout activity to the pinned resource set containing fonts and icons." .
+
+cgp:usedConfiguration a owl:ObjectProperty ;
+    rdfs:label "used configuration" ;
+    rdfs:range cgp:MapConfiguration ;
+    rdfs:comment "Links a map image or rendering run to the map configuration entity specifying bounds and resolution." .
+
+cgp:pinnedAsset a owl:DatatypeProperty ;
+    rdfs:label "pinned asset" ;
+    rdfs:range xsd:string ;
+    rdfs:comment "A pinned graphical asset (font, icon bitmap, or SVG symbol) in a cgp:ResourceSet, identified by a content hash or versioned resource identifier (e.g. 'sha256:font-noto-sans-regular@6a3b')." .

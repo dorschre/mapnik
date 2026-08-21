@@ -1,0 +1,11 @@
+PREFIX cg:   <https://w3id.org/cartograph#>
+PREFIX cgp:  <https://w3id.org/cartograph-provenance#>
+PREFIX geo:  <http://www.opengis.net/ont/geosparql#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX ex:   <https://example.org/nuremberg/>
+
+SELECT ?feature ?featureLabel ?wkt WHERE {
+  ex:elem_neutor_casing cg:depictsFeature ?feature .
+  OPTIONAL { ?feature rdfs:label ?featureLabel . }
+  OPTIONAL { ?feature geo:hasGeometry/geo:asWKT ?wkt . }
+}

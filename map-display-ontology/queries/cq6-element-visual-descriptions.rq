@@ -1,0 +1,16 @@
+PREFIX cg:   <https://w3id.org/cartograph#>
+PREFIX cgp:  <https://w3id.org/cartograph-provenance#>
+PREFIX geo:  <http://www.opengis.net/ont/geosparql#>
+PREFIX ex:   <https://example.org/nuremberg/>
+
+SELECT ?element ?layerName ?drawOrder ?pixelCount ?portrayal ?renderedText ?iconName WHERE {
+  ?element cg:inMap ex:tile_z17_44758 ;
+           cg:inLayer ?layer ;
+           cg:drawOrder ?drawOrder ;
+           cg:pixelCount ?pixelCount ;
+           cg:hasPortrayal ?portrayal .
+  ?layer cg:layerName ?layerName .
+  OPTIONAL { ?portrayal cg:renderedText ?renderedText . }
+  OPTIONAL { ?portrayal cg:iconName ?iconName . }
+}
+ORDER BY ?drawOrder

@@ -1,0 +1,30 @@
+# How many streets have a name?
+# Two different questions, deliberately kept apart:
+#   named    - the source data knows a name (ex:name on the geo:Feature)
+#   labelled - the name is actually readable on the image (cg:visibleLabel)
+# Only the second is answerable from the picture alone; the gap between them is
+# exactly what stops a benchmark asking about text that was never drawn.
+PREFIX cg: <https://w3id.org/cartograph#>
+PREFIX ex: <https://example.org/berlin/>
+
+SELECT ?streets ?named ?labelled WHERE {
+  { SELECT (COUNT(DISTINCT ?o) AS ?streets) WHERE {
+      ?o a cg:VisibleObject ; cg:inLayer [ cg:layerName "roads" ] ; cg:representsFeature ?f .
+      ?f ex:highway ?h .
+      FILTER(?h IN ("motorway", "trunk", "primary", "secondary", "tertiary",
+                    "residential", "unclassified", "living_street", "pedestrian", "service"))
+  } }
+  { SELECT (COUNT(DISTINCT ?o) AS ?named) WHERE {
+      ?o a cg:VisibleObject ; cg:inLayer [ cg:layerName "roads" ] ; cg:representsFeature ?f .
+      ?f ex:highway ?h ; ex:name ?n .
+      FILTER(?h IN ("motorway", "trunk", "primary", "secondary", "tertiary",
+                    "residential", "unclassified", "living_street", "pedestrian", "service"))
+  } }
+  { SELECT (COUNT(DISTINCT ?o) AS ?labelled) WHERE {
+      ?o a cg:VisibleObject ; cg:inLayer [ cg:layerName "roads" ] ; cg:representsFeature ?f ;
+         cg:visibleLabel ?label .
+      ?f ex:highway ?h .
+      FILTER(?h IN ("motorway", "trunk", "primary", "secondary", "tertiary",
+                    "residential", "unclassified", "living_street", "pedestrian", "service"))
+  } }
+}

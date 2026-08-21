@@ -1,0 +1,315 @@
+@prefix sh:   <http://www.w3.org/ns/shacl#> .
+@prefix cg:   <https://w3id.org/cartograph#> .
+@prefix geo:  <http://www.opengis.net/ont/geosparql#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<https://w3id.org/cartograph/shapes>
+    a sh:NodeShape ;
+    rdfs:label "CartoGraph Map Representation Validation Shapes" ;
+    rdfs:comment "SHACL shapes validating MapImage, VisibleObject, Canvas DisplayElements (0D/1D/2D), and their Portrayals & Compound Portrayals." .
+
+################################################################################
+# MapImage Shape
+################################################################################
+
+cg:MapImageShape
+    a sh:NodeShape ;
+    sh:targetClass cg:MapImage ;
+    sh:property [
+        sh:path cg:canvasWidthPx ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 1 ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:message "A MapImage must have exactly one canvasWidthPx >= 1." ;
+    ] ;
+    sh:property [
+        sh:path cg:canvasHeightPx ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 1 ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:message "A MapImage must have exactly one canvasHeightPx >= 1." ;
+    ] ;
+    sh:property [
+        sh:path cg:zoomLevel ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 0.0 ;
+        sh:maxCount 1 ;
+        sh:message "A MapImage may carry at most one zoomLevel decimal >= 0 (optional; use cg:scaleDenominator for non-tiled renders)." ;
+    ] ;
+    sh:property [
+        sh:path cg:crs ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:message "A MapImage must specify a coordinate reference system (cg:crs)." ;
+    ] ;
+    sh:property [
+        sh:path cg:viewportWkt ;
+        sh:datatype geo:wktLiteral ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:message "A MapImage must have exactly one viewport bounding WKT geometry." ;
+    ] .
+
+################################################################################
+# VisibleObject Shape
+################################################################################
+
+cg:VisibleObjectShape
+    a sh:NodeShape ;
+    sh:targetClass cg:VisibleObject ;
+    sh:property [
+        sh:path cg:inMap ;
+        sh:class cg:MapImage ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:message "A VisibleObject must belong to exactly one MapImage." ;
+    ] ;
+    sh:property [
+        sh:path cg:representsFeature ;
+        sh:class geo:Feature ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:message "A VisibleObject must link to exactly one source geo:Feature." ;
+    ] ;
+    sh:property [
+        sh:path cg:hasDisplayedElement ;
+        sh:class cg:DisplayElement ;
+        sh:minCount 1 ;
+        sh:message "A VisibleObject must have at least one associated DisplayElement (central benchmark invariant: no ungrounded visible objects)." ;
+    ] ;
+    sh:property [
+        sh:path cg:visiblePixelCount ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 1 ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:message "A VisibleObject must have a positive visiblePixelCount." ;
+    ] .
+
+################################################################################
+# CandidateElement Shape (all occurrences, incl. non-surviving)
+################################################################################
+
+cg:CandidateElementShape
+    a sh:NodeShape ;
+    sh:targetClass cg:CandidateElement ;
+    sh:property [
+        sh:path cg:inMap ;
+        sh:class cg:MapImage ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:message "A CandidateElement must be located in exactly one MapImage." ;
+    ] ;
+    sh:property [
+        sh:path cg:depictsFeature ;
+        sh:class geo:Feature ;
+        sh:minCount 1 ;
+        sh:message "A CandidateElement must depict at least one source geo:Feature." ;
+    ] ;
+    sh:property [
+        sh:path cg:drawOrder ;
+        sh:datatype xsd:integer ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:message "A CandidateElement must have an integer drawOrder sequence number." ;
+    ] ;
+    sh:property [
+        sh:path cg:isClipped ;
+        sh:datatype xsd:boolean ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:message "A CandidateElement must explicitly state whether it is clipped (cg:isClipped)." ;
+    ] .
+
+################################################################################
+# DisplayElement Shape (0D/1D/2D Canvas Spatial Occurrence, survivors only)
+################################################################################
+
+cg:DisplayElementShape
+    a sh:NodeShape ;
+    sh:targetClass cg:DisplayElement ;
+    sh:property [
+        sh:path cg:inMap ;
+        sh:class cg:MapImage ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:message "A DisplayElement must be located in exactly one MapImage." ;
+    ] ;
+    sh:property [
+        sh:path cg:depictsFeature ;
+        sh:class geo:Feature ;
+        sh:minCount 1 ;
+        sh:message "A DisplayElement must depict at least one source geo:Feature." ;
+    ] ;
+    sh:property [
+        sh:path cg:pixelCount ;
+        sh:datatype xsd:integer ;
+        sh:minInclusive 1 ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:message "A surviving DisplayElement must have a positive pixelCount." ;
+    ] ;
+    sh:property [
+        sh:path cg:drawOrder ;
+        sh:datatype xsd:integer ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:message "A DisplayElement must have an integer drawOrder sequence number." ;
+    ] ;
+    sh:property [
+        sh:path cg:isClipped ;
+        sh:datatype xsd:boolean ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:message "A DisplayElement must explicitly state whether it is clipped (cg:isClipped)." ;
+    ] ;
+    sh:property [
+        sh:path cg:hasPortrayal ;
+        sh:class cg:Portrayal ;
+        sh:minCount 1 ;
+        sh:message "A DisplayElement must have at least one visual portrayal (cg:hasPortrayal)." ;
+    ] .
+
+################################################################################
+# Portrayal Shapes
+################################################################################
+
+cg:StrokePortrayalShape
+    a sh:NodeShape ;
+    sh:targetClass cg:StrokePortrayal ;
+    sh:property [
+        sh:path cg:strokeColor ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:message "A StrokePortrayal must specify a strokeColor." ;
+    ] ;
+    sh:property [
+        sh:path cg:strokeWidthPx ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 0.1 ;
+        sh:minCount 1 ;
+        sh:message "A StrokePortrayal must specify a positive strokeWidthPx." ;
+    ] .
+
+cg:FillPortrayalShape
+    a sh:NodeShape ;
+    sh:targetClass cg:FillPortrayal ;
+    sh:property [
+        sh:path cg:fillColor ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:message "A FillPortrayal must specify a fillColor." ;
+    ] .
+
+cg:TextPortrayalShape
+    a sh:NodeShape ;
+    sh:targetClass cg:TextPortrayal ;
+    sh:property [
+        sh:path cg:renderedText ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:maxCount 1 ;
+        sh:message "A TextPortrayal must carry exactly one renderedText string value." ;
+    ] ;
+    sh:property [
+        sh:path cg:fontSizePx ;
+        sh:datatype xsd:decimal ;
+        sh:minInclusive 1.0 ;
+        sh:minCount 1 ;
+        sh:message "A TextPortrayal must have a fontSizePx >= 1.0." ;
+    ] .
+
+cg:MarkerPortrayalShape
+    a sh:NodeShape ;
+    sh:targetClass cg:MarkerPortrayal ;
+    sh:property [
+        sh:path cg:iconName ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+        sh:message "A MarkerPortrayal must specify an iconName." ;
+    ] .
+
+################################################################################
+# Compound Portrayal Shapes
+################################################################################
+
+cg:CompoundPortrayalShape
+    a sh:NodeShape ;
+    sh:targetClass cg:CompoundPortrayal ;
+    sh:property [
+        sh:path cg:hasComponent ;
+        sh:class cg:Portrayal ;
+        sh:minCount 1 ;
+        sh:message "A CompoundPortrayal must have at least one constituent component portrayal (cg:hasComponent)." ;
+    ] .
+
+cg:ShieldPortrayalShape
+    a sh:NodeShape ;
+    sh:targetClass cg:ShieldPortrayal ;
+    sh:property [
+        sh:path cg:hasIconComponent ;
+        sh:class cg:MarkerPortrayal ;
+        sh:minCount 1 ;
+        sh:message "A ShieldPortrayal must have at least one icon marker component (cg:hasIconComponent)." ;
+    ] ;
+    sh:property [
+        sh:path cg:hasTextComponent ;
+        sh:class cg:TextPortrayal ;
+        sh:minCount 1 ;
+        sh:message "A ShieldPortrayal must have at least one route text component (cg:hasTextComponent)." ;
+    ] .
+
+cg:CasedLinePortrayalShape
+    a sh:NodeShape ;
+    sh:targetClass cg:CasedLinePortrayal ;
+    sh:property [
+        sh:path cg:hasCasingStroke ;
+        sh:class cg:StrokePortrayal ;
+        sh:minCount 1 ;
+        sh:message "A CasedLinePortrayal must have at least one casing stroke component." ;
+    ] ;
+    sh:property [
+        sh:path cg:hasFillStroke ;
+        sh:class cg:StrokePortrayal ;
+        sh:minCount 1 ;
+        sh:message "A CasedLinePortrayal must have at least one fill stroke component." ;
+    ] .
+
+################################################################################
+# Anchor Dimension Consistency (integer <-> SKOS concept)
+################################################################################
+
+cg:AnchorDimensionConsistencyShape
+    a sh:NodeShape ;
+    sh:targetClass cg:CandidateElement ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:message "anchorDimension and hasAnchorDimension must agree: 0=PointAnchor, 1=CurveAnchor, 2=SurfaceAnchor." ;
+        sh:select """
+            SELECT $this ?dimension ?concept WHERE {
+                $this cg:anchorDimension ?dimension .
+                $this cg:hasAnchorDimension ?concept .
+                FILTER(
+                    (?dimension = 0 && ?concept != cg:PointAnchor) ||
+                    (?dimension = 1 && ?concept != cg:CurveAnchor) ||
+                    (?dimension = 2 && ?concept != cg:SurfaceAnchor)
+                )
+            }
+        """ ;
+    ] .
+
+################################################################################
+# GeoSPARQL Feature Shape
+################################################################################
+
+cg:GeoFeatureShape
+    a sh:NodeShape ;
+    sh:targetClass geo:Feature ;
+    sh:property [
+        sh:path geo:hasGeometry ;
+        sh:class geo:Geometry ;
+        sh:message "If a geo:Feature carries a geometry, it must be a geo:Geometry. Geometry is optional: a pure ground-truth graph may legitimately withhold unclipped source geometry (in-datasource does not imply visible-on-map)." ;
+    ] .

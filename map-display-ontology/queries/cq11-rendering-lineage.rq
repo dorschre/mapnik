@@ -1,0 +1,31 @@
+PREFIX cg:   <https://w3id.org/cartograph#>
+PREFIX cgp:  <https://w3id.org/cartograph-provenance#>
+PREFIX geo:  <http://www.opengis.net/ont/geosparql#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX ex:   <https://example.org/nuremberg/>
+
+# CQ11: Auditable rendering lineage — Given a display element, trace the mediated
+# chain: element --(prov:wasGeneratedBy)--> activity --(prov:qualifiedAssociation)-->
+# prov:Association --(prov:hadPlan)--> plan, --(prov:agent)--> agent, plus the
+# source feature (prov:wasDerivedFrom) and the plan's label.
+#
+# NOTE: To keep the trace semantically precise we additionally constrain the plan
+# to the one the element actually used (cgp:usedRule). Because all elements point to
+# a single shared MapRenderingActivity, a bare qualifiedAssociation join would
+# otherwise return the full cross-product of every plan associated with the
+# activity (over-association), including e.g. a road line wrongly matched to the
+# hospital marker rule.
+SELECT DISTINCT ?element ?feature ?activity ?agent ?plan ?planLabel WHERE {
+  ?element cg:inMap ex:tile_z17_44758 ;
+           cg:depictsFeature ?feature ;
+           cgp:usedRule ?plan ;
+           prov:wasGeneratedBy ?activity .
+  ?activity a prov:Activity ;
+            prov:qualifiedAssociation ?assoc .
+  ?assoc prov:agent ?agent ;
+         prov:hadPlan ?plan .
+  ?plan a prov:Plan ;
+        rdfs:label ?planLabel .
+}
+ORDER BY ?element ?planLabel

@@ -1,0 +1,566 @@
+@prefix cg:     <https://w3id.org/cartograph#> .
+@prefix cgp:    <https://w3id.org/cartograph-provenance#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix geo:    <http://www.opengis.net/ont/geosparql#> .
+@prefix prov:   <http://www.w3.org/ns/prov#> .
+@prefix dct:    <http://purl.org/dc/terms/> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+
+<https://w3id.org/cartograph>
+    a owl:Ontology ;
+    dct:title "CartoGraph Map Representation Ontology" ;
+    dct:description """The representation vocabulary of CartoGraph, connecting geospatial features, geometries, and datasource attributes to their concrete visual display elements on rendered map images.
+
+The ontology strictly separates:
+1. Geospatial entities (geo:Feature, geo:Geometry, domain/source attributes) in geographic CRS.
+2. Canvas geometric display elements (cg:PointElement, cg:LineElement, cg:PolygonElement) representing 0D, 1D, and 2D spatial footprints on the screen.
+3. Visual graphic representations (cg:Portrayal), both atomic (StrokePortrayal, FillPortrayal, TextPortrayal, MarkerPortrayal, PatternPortrayal) and composed (cg:CompoundPortrayal such as ShieldPortrayal, CasedLinePortrayal, ComposedSurfacePortrayal).
+4. Visible semantic objects (cg:VisibleObject) that aggregate surviving display elements per source feature in a specific map image.
+5. Strict distinction between visually manifested information (rendered text, visible icons) and non-visual source metadata, ensuring reliable Visual Question Answering (VQA) ground truth.
+
+This representation vocabulary imports the CartoGraph Provenance Vocabulary (https://w3id.org/cartograph-provenance#) and specializes its feature-derivation root cgp:derivedFromFeature into cg:depictsFeature (canvas depiction) and cg:representsFeature (visible semantic object).""" ;
+    dct:creator "Rene Dorsch" ;
+    dct:created "2026-08-17"^^xsd:date ;
+    dct:modified "2026-08-19"^^xsd:date ;
+    dct:license <https://creativecommons.org/licenses/by/4.0/> ;
+    owl:versionInfo "2.0.0" ;
+    owl:imports <https://w3id.org/cartograph-provenance>, <http://www.opengis.net/ont/geosparql#> ;
+    rdfs:seeAlso <https://w3id.org/layout-engine/trace> .
+
+################################################################################
+# Core Infrastructure Classes
+################################################################################
+
+cg:MapImage a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Map image" ;
+    rdfs:comment "A rendered raster or vector map image artifact produced from geospatial source data according to a map configuration, portrayal rules, and layout policy." .
+
+cg:MapLayer a owl:Class ;
+    rdfs:label "Map layer" ;
+    rdfs:comment "A logical rendering layer within a map style (e.g., 'roads', 'buildings', 'water', 'amenities') that groups feature portrayal passes." .
+
+cg:VisibleObject a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Visible object" ;
+    rdfs:comment "A semantic map object (derived from a geospatial feature) that has at least one graphical display element surviving final visibility resolution in a specific map image. Aggregates all surviving display elements for that feature in that image." .
+
+################################################################################
+# Canvas Geometric Display Elements (0D, 1D, 2D Spatial Primitives on Canvas)
+################################################################################
+
+cg:CandidateElement a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "Candidate element" ;
+    rdfs:comment "A graphical occurrence produced by rule application (stage S_E) that may or may not survive final visibility resolution. Covers both surviving elements (cg:DisplayElement) and non-surviving candidates (suppressed, occluded, or outside the viewport) that left no visible pixels. Non-surviving candidates carry a cg:visibilityStatus of cg:Suppressed, cg:Occluded, or cg:OutsideViewport and a pixelCount of 0." .
+
+cg:DisplayElement a owl:Class ;
+    rdfs:subClassOf cg:CandidateElement ;
+    rdfs:label "Display element" ;
+    rdfs:comment "A candidate element that survived final visibility resolution and contributes visual information to at least one pixel of the final map image. Possesses screen-space pixel coordinates, rendering order, visibility metrics, and one or more visual portrayals." .
+
+cg:PointElement a owl:Class ;
+    rdfs:subClassOf cg:DisplayElement ;
+    rdfs:label "Point display element" ;
+    rdfs:comment "A 0-dimensional (punctual) display element anchored to a discrete [x, y] coordinate on the map canvas (e.g. icon anchors, spot label positions, vertex points)." .
+
+cg:LineElement a owl:Class ;
+    rdfs:subClassOf cg:DisplayElement ;
+    rdfs:label "Line display element" ;
+    rdfs:comment "A 1-dimensional (linear) display element representing a curve, polyline, or path in screen-pixel space (e.g. road course, railway track, boundary curve, line label path)." .
+
+cg:PolygonElement a owl:Class ;
+    rdfs:subClassOf cg:DisplayElement ;
+    rdfs:label "Polygon display element" ;
+    rdfs:comment "A 2-dimensional (areal) display element representing a bounded planar surface or region in screen-pixel space (e.g. building footprint, landuse surface, waterbody polygon)." .
+
+################################################################################
+# Visual Representations (Portrayals & Compositions)
+################################################################################
+
+cg:Portrayal a owl:Class ;
+    rdfs:label "Portrayal" ;
+    rdfs:comment "A visual graphic representation or styling specification manifested on a display element (colors, strokes, fills, typography, icons, textures, or compounds)." .
+
+# --- Atomic Portrayals ---
+
+cg:StrokePortrayal a owl:Class ;
+    rdfs:subClassOf cg:Portrayal ;
+    rdfs:label "Stroke portrayal" ;
+    rdfs:comment "A linear stroked mark characterized by stroke color, width in pixels, dash pattern, and line cap/join styling." .
+
+cg:FillPortrayal a owl:Class ;
+    rdfs:subClassOf cg:Portrayal ;
+    rdfs:label "Fill portrayal" ;
+    rdfs:comment "A planar interior surface fill characterized by fill color and opacity." .
+
+cg:PatternPortrayal a owl:Class ;
+    rdfs:subClassOf cg:Portrayal ;
+    rdfs:label "Pattern portrayal" ;
+    rdfs:comment "A repeated 2D graphical texture or tile pattern (e.g. forest tree icons, marsh hatching) filling an area or line." .
+
+cg:MarkerPortrayal a owl:Class ;
+    rdfs:subClassOf cg:Portrayal ;
+    rdfs:label "Marker portrayal" ;
+    rdfs:comment "A pictorial icon or symbol asset (e.g. SVG/PNG symbol) placed at a canvas coordinate." .
+
+cg:DotPortrayal a owl:Class ;
+    rdfs:subClassOf cg:Portrayal ;
+    rdfs:label "Dot portrayal" ;
+    rdfs:comment "A basic geometric point shape (circle dot, square, cross) with specified size and fill color." .
+
+cg:TextPortrayal a owl:Class ;
+    rdfs:subClassOf cg:Portrayal ;
+    rdfs:label "Text portrayal" ;
+    rdfs:comment "A written typographic mark characterized by rendered text string, font family, font size, text color, and optional halo." .
+
+cg:RasterPortrayal a owl:Class ;
+    rdfs:subClassOf cg:Portrayal ;
+    rdfs:label "Raster portrayal" ;
+    rdfs:comment "A rasterized imagery patch (e.g. hillshade raster tile, aerial photo layer) drawn onto canvas." .
+
+# --- Compound Portrayals ---
+
+cg:CompoundPortrayal a owl:Class ;
+    rdfs:subClassOf cg:Portrayal ;
+    rdfs:label "Compound portrayal" ;
+    rdfs:comment "A composite visual representation composed of multiple atomic or sub-portrayal components." .
+
+cg:ShieldPortrayal a owl:Class ;
+    rdfs:subClassOf cg:CompoundPortrayal ;
+    rdfs:label "Shield portrayal" ;
+    rdfs:comment "A composite 0D point portrayal combining a marker/badge icon (cg:MarkerPortrayal) and an enclosed route/highway text label (cg:TextPortrayal)." .
+
+cg:CasedLinePortrayal a owl:Class ;
+    rdfs:subClassOf cg:CompoundPortrayal ;
+    rdfs:label "Cased line portrayal" ;
+    rdfs:comment "A composite 1D line portrayal composed of an outer casing stroke (cg:StrokePortrayal), an inner fill stroke (cg:StrokePortrayal), and optional dash overlays or oriented labels." .
+
+cg:ComposedSurfacePortrayal a owl:Class ;
+    rdfs:subClassOf cg:CompoundPortrayal ;
+    rdfs:label "Composed surface portrayal" ;
+    rdfs:comment "A composite 2D polygon portrayal composed of an interior fill (cg:FillPortrayal), optional pattern/texture (cg:PatternPortrayal), boundary stroke (cg:StrokePortrayal), and optional centroid label/icon." .
+
+################################################################################
+# Relationships Linking Features, Visible Objects, Display Elements & Portrayals
+################################################################################
+
+cg:depictsFeature a owl:ObjectProperty ;
+    rdfs:subPropertyOf cgp:derivedFromFeature ;
+    rdfs:label "depicts feature" ;
+    rdfs:domain cg:CandidateElement ;
+    rdfs:range geo:Feature ;
+    rdfs:comment "Links a graphical display element directly to the geospatial feature (geo:Feature) from which it was derived and which it depicts on the map. A specialized feature-derivation." .
+
+cg:representsFeature a owl:ObjectProperty ;
+    rdfs:subPropertyOf cgp:derivedFromFeature ;
+    rdfs:label "represents feature" ;
+    rdfs:domain cg:VisibleObject ;
+    rdfs:range geo:Feature ;
+    rdfs:comment "Links a visible semantic object in a map image to the underlying geospatial source feature (geo:Feature). A specialized feature-derivation." .
+
+cg:hasDisplayElement a owl:ObjectProperty ;
+    owl:inverseOf cg:depictsFeature ;
+    rdfs:label "has display element" ;
+    rdfs:domain geo:Feature ;
+    rdfs:range cg:CandidateElement ;
+    rdfs:comment "Links a geospatial feature to a concrete graphical display element that portrays it on a map image." .
+
+cg:hasVisibleObject a owl:ObjectProperty ;
+    owl:inverseOf cg:representsFeature ;
+    rdfs:label "has visible object" ;
+    rdfs:domain geo:Feature ;
+    rdfs:range cg:VisibleObject ;
+    rdfs:comment "Links a geospatial feature to its visible semantic object manifestation in a map image." .
+
+cg:partOfVisibleObject a owl:ObjectProperty ;
+    rdfs:label "part of visible object" ;
+    rdfs:domain cg:CandidateElement ;
+    rdfs:range cg:VisibleObject ;
+    rdfs:comment "Links a concrete display element to the semantic visible object that aggregates it." .
+
+cg:hasDisplayedElement a owl:ObjectProperty ;
+    owl:inverseOf cg:partOfVisibleObject ;
+    rdfs:label "has displayed element" ;
+    rdfs:domain cg:VisibleObject ;
+    rdfs:range cg:CandidateElement ;
+    rdfs:comment "Links a visible semantic object to the individual graphical display elements that compose its visible presence." .
+
+cg:hasPortrayal a owl:ObjectProperty ;
+    rdfs:label "has portrayal" ;
+    rdfs:domain cg:CandidateElement ;
+    rdfs:range cg:Portrayal ;
+    rdfs:comment "Links a display element to its visual representation / portrayal specification." .
+
+cg:hasComponent a owl:ObjectProperty ;
+    rdfs:label "has component" ;
+    rdfs:domain cg:CompoundPortrayal ;
+    rdfs:range cg:Portrayal ;
+    rdfs:comment "Links a compound visual portrayal to one of its constituent sub-portrayals." .
+
+# --- Specific Component Subproperties ---
+
+cg:hasCasingStroke a owl:ObjectProperty ;
+    rdfs:subPropertyOf cg:hasComponent ;
+    rdfs:label "has casing stroke" ;
+    rdfs:domain cg:CasedLinePortrayal ;
+    rdfs:range cg:StrokePortrayal ;
+    rdfs:comment "The outer casing stroke component of a cased line." .
+
+cg:hasFillStroke a owl:ObjectProperty ;
+    rdfs:subPropertyOf cg:hasComponent ;
+    rdfs:label "has fill stroke" ;
+    rdfs:domain cg:CasedLinePortrayal ;
+    rdfs:range cg:StrokePortrayal ;
+    rdfs:comment "The inner fill stroke component of a cased line." .
+
+cg:hasBoundaryStroke a owl:ObjectProperty ;
+    rdfs:subPropertyOf cg:hasComponent ;
+    rdfs:label "has boundary stroke" ;
+    rdfs:domain cg:ComposedSurfacePortrayal ;
+    rdfs:range cg:StrokePortrayal ;
+    rdfs:comment "The boundary outline stroke component of a composed surface." .
+
+cg:hasFillComponent a owl:ObjectProperty ;
+    rdfs:subPropertyOf cg:hasComponent ;
+    rdfs:label "has fill component" ;
+    rdfs:domain cg:ComposedSurfacePortrayal ;
+    rdfs:range cg:FillPortrayal ;
+    rdfs:comment "The interior fill component of a composed surface." .
+
+cg:hasPatternComponent a owl:ObjectProperty ;
+    rdfs:subPropertyOf cg:hasComponent ;
+    rdfs:label "has pattern component" ;
+    rdfs:domain cg:ComposedSurfacePortrayal ;
+    rdfs:range cg:PatternPortrayal ;
+    rdfs:comment "The pattern or texture fill component of a composed surface." .
+
+cg:hasIconComponent a owl:ObjectProperty ;
+    rdfs:subPropertyOf cg:hasComponent ;
+    rdfs:label "has icon component" ;
+    rdfs:domain cg:CompoundPortrayal ;
+    rdfs:range cg:MarkerPortrayal ;
+    rdfs:comment "The icon / marker symbol component of a compound portrayal (e.g. shield badge)." .
+
+cg:hasTextComponent a owl:ObjectProperty ;
+    rdfs:subPropertyOf cg:hasComponent ;
+    rdfs:label "has text component" ;
+    rdfs:domain cg:CompoundPortrayal ;
+    rdfs:range cg:TextPortrayal ;
+    rdfs:comment "The text label component of a compound portrayal (e.g. shield route number)." .
+
+cg:inMap a owl:ObjectProperty ;
+    rdfs:label "in map" ;
+    rdfs:range cg:MapImage ;
+    rdfs:comment "Links a display element, visible object, or map layer to the map image in which it occurs." .
+
+cg:inLayer a owl:ObjectProperty ;
+    rdfs:label "in layer" ;
+    rdfs:range cg:MapLayer ;
+    rdfs:comment "Links a display element or visible object to the map layer from which it was rendered." .
+
+################################################################################
+# Map Image & Viewport Properties
+################################################################################
+
+cg:canvasWidthPx a owl:DatatypeProperty ;
+    rdfs:label "canvas width in pixels" ;
+    rdfs:domain cg:MapImage ;
+    rdfs:range xsd:integer ;
+    rdfs:comment "Width of the rendered map image canvas in integer pixels." .
+
+cg:canvasHeightPx a owl:DatatypeProperty ;
+    rdfs:label "canvas height in pixels" ;
+    rdfs:domain cg:MapImage ;
+    rdfs:range xsd:integer ;
+    rdfs:comment "Height of the rendered map image canvas in integer pixels." .
+
+cg:zoomLevel a owl:DatatypeProperty ;
+    rdfs:label "zoom level" ;
+    rdfs:range xsd:decimal ;
+    rdfs:comment "The slippy-map zoom level at which the map image was rendered. Meaningful for tiled slippy-map output; for arbitrary extent-and-size renders use cg:scaleDenominator instead. No rdfs:domain is declared because the same viewport properties are carried by both cg:MapImage and cgp:MapConfiguration." .
+
+cg:scaleDenominator a owl:DatatypeProperty ;
+    rdfs:label "scale denominator" ;
+    rdfs:range xsd:decimal ;
+    rdfs:comment "The representative-fraction denominator (e.g. 25000 for 1:25000) of the rendered map. Preferred over cg:zoomLevel for arbitrary extent-and-size renders that are not slippy-map tiles." .
+
+cg:crs a owl:DatatypeProperty ;
+    rdfs:label "coordinate reference system" ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Identifier of the map projection or coordinate reference system used for rendering (e.g., 'EPSG:3857', 'CRS84'). No rdfs:domain is declared because the same viewport properties are carried by both cg:MapImage and cgp:MapConfiguration." .
+
+cg:viewportWkt a owl:DatatypeProperty ;
+    rdfs:label "viewport WKT" ;
+    rdfs:range geo:wktLiteral ;
+    rdfs:comment "The geographic bounding polygon or envelope of the map image in geographic CRS coordinates (e.g. OGC CRS84). No rdfs:domain is declared because the same viewport properties are carried by both cg:MapImage and cgp:MapConfiguration." .
+
+cg:backgroundColor a owl:DatatypeProperty ;
+    rdfs:label "background color" ;
+    rdfs:domain cg:MapImage ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The background fill color of the map canvas (e.g., hex '#f2efe9')." .
+
+cg:layerName a owl:DatatypeProperty ;
+    rdfs:label "layer name" ;
+    rdfs:domain cg:MapLayer ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The string identifier of the map layer (e.g., 'roads', 'buildings', 'amenities')." .
+
+cg:layerOrder a owl:DatatypeProperty ;
+    rdfs:label "layer order" ;
+    rdfs:domain cg:MapLayer ;
+    rdfs:range xsd:integer ;
+    rdfs:comment "The integer stacking order of the map layer within the stylesheet." .
+
+################################################################################
+# Spatial & Geometric Descriptions (Screen Pixel Space)
+################################################################################
+
+cg:pixelBbox a owl:DatatypeProperty ;
+    rdfs:label "pixel bounding box" ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Bounding box of the element or object in canvas pixel coordinates, formatted as '[minX, minY, maxX, maxY]'. Pixel coordinate convention: origin at the top-left corner, y increasing downward, coordinates refer to pixel corners, and pixel boxes are half-open [min, max)." .
+
+cg:visiblePixelBbox a owl:DatatypeProperty ;
+    rdfs:label "visible pixel bounding box" ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Bounding box of the actually visible (surviving) pixels of a visible object or element, formatted as '[minX, minY, maxX, maxY]' in canvas pixel coordinates. Contrast with cg:pixelBbox, which may span the full (including clipped) footprint." .
+
+cg:pixelBboxMinX a owl:DatatypeProperty ;
+    rdfs:label "pixel bounding box min X" ;
+    rdfs:range xsd:decimal ;
+    rdfs:comment "Minimum X coordinate of the bounding box in canvas pixel space." .
+
+cg:pixelBboxMinY a owl:DatatypeProperty ;
+    rdfs:label "pixel bounding box min Y" ;
+    rdfs:range xsd:decimal ;
+    rdfs:comment "Minimum Y coordinate of the bounding box in canvas pixel space." .
+
+cg:pixelBboxMaxX a owl:DatatypeProperty ;
+    rdfs:label "pixel bounding box max X" ;
+    rdfs:range xsd:decimal ;
+    rdfs:comment "Maximum X coordinate of the bounding box in canvas pixel space." .
+
+cg:pixelBboxMaxY a owl:DatatypeProperty ;
+    rdfs:label "pixel bounding box max Y" ;
+    rdfs:range xsd:decimal ;
+    rdfs:comment "Maximum Y coordinate of the bounding box in canvas pixel space." .
+
+cg:pixelGeometry a owl:DatatypeProperty ;
+    rdfs:label "pixel geometry" ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Exact screen-space geometry of the visible pixels (as WKT or GeoJSON MultiPolygon in pixel coordinates). Pixel coordinate convention: origin at the top-left corner, y increasing downward, coordinates refer to pixel corners, and pixel boxes are half-open [min, max)." .
+
+cg:pixelAnchorX a owl:DatatypeProperty ;
+    rdfs:label "pixel anchor X" ;
+    rdfs:range xsd:decimal ;
+    rdfs:comment "Anchor X coordinate in canvas pixel space (for point elements, text, or markers). Pixel coordinate convention: origin at the top-left corner, y increasing downward." .
+
+cg:pixelAnchorY a owl:DatatypeProperty ;
+    rdfs:label "pixel anchor Y" ;
+    rdfs:range xsd:decimal ;
+    rdfs:comment "Anchor Y coordinate in canvas pixel space (for point elements, text, or markers). Pixel coordinate convention: origin at the top-left corner, y increasing downward." .
+
+cg:rotationDegrees a owl:DatatypeProperty ;
+    rdfs:label "rotation degrees" ;
+    rdfs:range xsd:decimal ;
+    rdfs:comment "Rotation angle of the text label or symbol in clockwise degrees relative to the image coordinate system." .
+
+cg:anchorDimension a owl:DatatypeProperty ;
+    rdfs:label "anchor dimension" ;
+    rdfs:range xsd:integer ;
+    rdfs:comment "Topological dimension of the canvas geometric primitive: 0 for PointElement, 1 for LineElement, 2 for PolygonElement. The integer re-expression of cg:hasAnchorDimension; the two must agree (0=PointAnchor, 1=CurveAnchor, 2=SurfaceAnchor), enforced by the cg:AnchorDimensionConsistencyShape." .
+
+cg:placement a owl:DatatypeProperty ;
+    rdfs:label "placement" ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Cartographic placement mode from portrayal rules: 'point' (0D), 'line' (1D), or 'area'/'surface' (2D)." .
+
+cg:hasAnchorDimension a owl:ObjectProperty ;
+    rdfs:label "has anchor dimension" ;
+    rdfs:range cg:AnchorDimension ;
+    rdfs:comment "Links a display element to its controlled topological anchor dimension concept (cg:PointAnchor, cg:CurveAnchor, cg:SurfaceAnchor)." .
+
+################################################################################
+# Visibility & Rendering Order Metrics
+################################################################################
+
+cg:pixelCount a owl:DatatypeProperty ;
+    rdfs:label "pixel count" ;
+    rdfs:range xsd:integer ;
+    rdfs:comment "The number of final output pixels on the map image owned by this display element or portrayal component. Zero for non-surviving candidate elements." .
+
+cg:visiblePixelCount a owl:DatatypeProperty ;
+    rdfs:label "visible pixel count" ;
+    rdfs:domain cg:VisibleObject ;
+    rdfs:range xsd:integer ;
+    rdfs:comment "The total number of final output pixels on the map image owned by this visible semantic object across all its display elements." .
+
+cg:drawOrder a owl:DatatypeProperty ;
+    rdfs:label "draw order" ;
+    rdfs:range xsd:integer ;
+    rdfs:comment "Monotonically increasing drawing sequence number indicating the exact paint order in the rendering pass." .
+
+cg:zIndex a owl:DatatypeProperty ;
+    rdfs:label "z-index" ;
+    rdfs:range xsd:integer ;
+    rdfs:comment "Stacking priority or z-index assigned by the portrayal style rule." .
+
+cg:isClipped a owl:DatatypeProperty ;
+    rdfs:label "is clipped" ;
+    rdfs:range xsd:boolean ;
+    rdfs:comment "Indicates whether the element's geometry crosses and is clipped by the image viewport boundary." .
+
+cg:visibilityStatus a owl:ObjectProperty ;
+    rdfs:label "visibility status" ;
+    rdfs:range cg:VisibilityStatus ;
+    rdfs:comment "SKOS Concept describing the visibility resolution outcome of this element (e.g. RenderedComplete, RenderedClipped, Suppressed)." .
+
+################################################################################
+# Portrayal Visual Styling Attributes
+################################################################################
+
+cg:strokeColor a owl:DatatypeProperty ;
+    rdfs:label "stroke color" ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Hex or CSS color string used to stroke lines or polygon boundaries (e.g., '#777777', '#ffffff')." .
+
+cg:strokeWidthPx a owl:DatatypeProperty ;
+    rdfs:label "stroke width in pixels" ;
+    rdfs:range xsd:decimal ;
+    rdfs:comment "Width of the drawn stroke in canvas pixels." .
+
+cg:fillColor a owl:DatatypeProperty ;
+    rdfs:label "fill color" ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Hex or CSS color string used for filling polygon interiors or point markers (e.g., '#d9d0c9')." .
+
+cg:opacity a owl:DatatypeProperty ;
+    rdfs:label "opacity" ;
+    rdfs:range xsd:decimal ;
+    rdfs:comment "Alpha opacity value between 0.0 (transparent) and 1.0 (fully opaque)." .
+
+cg:dashPattern a owl:DatatypeProperty ;
+    rdfs:label "dash pattern" ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Stroke dasharray pattern specification (e.g., '3 3', '5 2 1 2')." .
+
+cg:fontFamily a owl:DatatypeProperty ;
+    rdfs:label "font family" ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Font face or font family name used for rendering text (e.g., 'Noto Sans Regular', 'DejaVu Sans Book')." .
+
+cg:fontSizePx a owl:DatatypeProperty ;
+    rdfs:label "font size in pixels" ;
+    rdfs:range xsd:decimal ;
+    rdfs:comment "Font size in canvas pixels." .
+
+cg:textColor a owl:DatatypeProperty ;
+    rdfs:label "text color" ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Color hex string used for rendering text glyphs (e.g., '#000000', '#444444')." .
+
+cg:haloColor a owl:DatatypeProperty ;
+    rdfs:label "halo color" ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Color hex string used for the text halo / outline (e.g., '#ffffff')." .
+
+cg:haloRadiusPx a owl:DatatypeProperty ;
+    rdfs:label "halo radius in pixels" ;
+    rdfs:range xsd:decimal ;
+    rdfs:comment "Radius of the text halo outline in pixels." .
+
+cg:iconName a owl:DatatypeProperty ;
+    rdfs:label "icon name" ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Resource identifier or name of the icon asset drawn for this marker (e.g., 'amenity-hospital', 'city-gate')." .
+
+cg:patternName a owl:DatatypeProperty ;
+    rdfs:label "pattern name" ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Resource identifier or name of the fill texture / pattern tile (e.g., 'forest-texture')." .
+
+cg:symbolShape a owl:DatatypeProperty ;
+    rdfs:label "symbol shape" ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Geometric shape drawn for dot symbols (e.g., 'circle', 'square', 'cross')." .
+
+cg:sizePx a owl:DatatypeProperty ;
+    rdfs:label "size in pixels" ;
+    rdfs:range xsd:decimal ;
+    rdfs:comment "Width/height diameter in canvas pixels for dots or point symbols." .
+
+################################################################################
+# Manifested Content vs Source Metadata
+################################################################################
+
+cg:renderedText a owl:DatatypeProperty ;
+    rdfs:label "rendered text" ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The exact text string laid out, rasterized, and visibly present on the map image. Kept strictly distinct from non-manifested datasource tags." .
+
+cg:visibleLabel a owl:DatatypeProperty ;
+    rdfs:label "visible label" ;
+    rdfs:domain cg:VisibleObject ;
+    rdfs:range xsd:string ;
+    rdfs:comment "The text label that is visibly readable on the map for this semantic object." .
+
+cg:featureId a owl:DatatypeProperty ;
+    rdfs:label "feature ID" ;
+    rdfs:range xsd:string ;
+    rdfs:comment "Source datasource identifier (e.g., OSM ID or primary key) linking the visible object or display element back to the source data." .
+
+cg:featureType a owl:DatatypeProperty ;
+    rdfs:label "feature type" ;
+    rdfs:range xsd:string ;
+    rdfs:comment "A lightweight, portable tag for the semantic type of a geospatial feature (e.g. 'road', 'building', 'hospital', 'motorway') without requiring consumers to mint a class per type. Complements, and does not replace, domain-specific feature classes." .
+
+################################################################################
+# Controlled Vocabularies (SKOS Concepts)
+################################################################################
+
+cg:VisibilityStatus a owl:Class ;
+    rdfs:subClassOf skos:Concept ;
+    rdfs:label "Visibility status concept" ;
+    rdfs:comment "Controlled vocabulary of visibility resolution outcomes." .
+
+cg:RenderedComplete a cg:VisibilityStatus ;
+    skos:prefLabel "Rendered complete" ;
+    skos:definition "The display element was rendered and completely inside the viewport without boundary clipping." .
+
+cg:RenderedClipped a cg:VisibilityStatus ;
+    skos:prefLabel "Rendered clipped" ;
+    skos:definition "The display element was rendered but partially clipped by the viewport boundary, retaining visible pixels inside." .
+
+cg:Suppressed a cg:VisibilityStatus ;
+    skos:prefLabel "Suppressed" ;
+    skos:definition "The candidate display element was suppressed due to collision with higher priority elements." .
+
+cg:Occluded a cg:VisibilityStatus ;
+    skos:prefLabel "Occluded" ;
+    skos:definition "The display element was rasterized but subsequently completely covered by opaque higher-layer elements." .
+
+cg:OutsideViewport a cg:VisibilityStatus ;
+    skos:prefLabel "Outside viewport" ;
+    skos:definition "The candidate display element fell entirely outside the map viewport and produced no canvas pixels." .
+
+cg:AnchorDimension a owl:Class ;
+    rdfs:subClassOf skos:Concept ;
+    rdfs:label "Anchor dimension concept" ;
+    rdfs:comment "Controlled vocabulary of cartographic spatial anchor dimensions (0D point, 1D curve, 2D surface)." .
+
+cg:PointAnchor a cg:AnchorDimension ;
+    skos:prefLabel "0D Point Anchor" ;
+    skos:definition "0-dimensional punctual anchoring to a single point coordinate." .
+
+cg:CurveAnchor a cg:AnchorDimension ;
+    skos:prefLabel "1D Curve Anchor" ;
+    skos:definition "1-dimensional linear anchoring along a path or curve." .
+
+cg:SurfaceAnchor a cg:AnchorDimension ;
+    skos:prefLabel "2D Surface Anchor" ;
+    skos:definition "2-dimensional areal anchoring to a planar region or surface." .
