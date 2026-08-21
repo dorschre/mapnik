@@ -4,4 +4,5 @@ endif()
 
 if(BUILD_DEMO_CPP)
     add_subdirectory(c++)
+    add_subdirectory(ground_truth)
 endif()
