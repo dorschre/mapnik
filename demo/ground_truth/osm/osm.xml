@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  A small OpenStreetMap-flavoured stylesheet over the GeoJSON extract produced
+  by fetch_osm.py. It is deliberately shaped like real OSM cartography - casing
+  plus fill per road class, buildings under roads, labels on top - so the visual
+  ground truth has to cope with heavy overlap, thousands of features and labels
+  that lose their placement to collisions.
+-->
+<Map background-color="#f2efe9" srs="epsg:3857" buffer-size="128">
+
+  <!-- ============================ landuse ============================ -->
+  <Style name="landuse">
+    <Rule>
+      <Filter>[landuse] = 'grass' or [leisure] = 'park' or [leisure] = 'garden'</Filter>
+      <PolygonSymbolizer fill="#cdebb0"/>
+    </Rule>
+    <Rule>
+      <Filter>[natural] = 'wood' or [landuse] = 'forest'</Filter>
+      <PolygonSymbolizer fill="#add19e"/>
+    </Rule>
+    <Rule>
+      <Filter>[landuse] = 'residential'</Filter>
+      <PolygonSymbolizer fill="#e0dfdf"/>
+    </Rule>
+    <Rule>
+      <Filter>[leisure] = 'pitch' or [leisure] = 'playground'</Filter>
+      <PolygonSymbolizer fill="#aae0a0"/>
+    </Rule>
+    <Rule>
+      <ElseFilter/>
+      <PolygonSymbolizer fill="#eeeade"/>
+    </Rule>
+  </Style>
+
+  <!-- ============================= water ============================= -->
+  <Style name="water">
+    <Rule>
+      <Filter>[waterway] = 'river' or [waterway] = 'stream' or [waterway] = 'canal'</Filter>
+      <LineSymbolizer stroke="#aad3df" stroke-width="6" stroke-linejoin="round"/>
+    </Rule>
+    <Rule>
+      <ElseFilter/>
+      <PolygonSymbolizer fill="#aad3df"/>
+    </Rule>
+  </Style>
+
+  <!-- =========================== buildings =========================== -->
+  <Style name="buildings">
+    <Rule>
+      <PolygonSymbolizer fill="#d9d0c9"/>
+      <LineSymbolizer stroke="#c1b4aa" stroke-width="0.6"/>
+    </Rule>
+  </Style>
+
+  <!-- ============================= roads ============================= -->
+  <!-- Casing and fill are separate symbolizers on the same feature: one
+       source object, several graphical occurrences. -->
+  <Style name="roads-casing">
+    <Rule>
+      <Filter>[highway] = 'motorway' or [highway] = 'trunk'</Filter>
+      <LineSymbolizer stroke="#e66e13" stroke-width="14" stroke-linejoin="round" stroke-linecap="round"/>
+    </Rule>
+    <Rule>
+      <Filter>[highway] = 'primary'</Filter>
+      <LineSymbolizer stroke="#c08040" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/>
+    </Rule>
+    <Rule>
+      <Filter>[highway] = 'secondary' or [highway] = 'tertiary'</Filter>
+      <LineSymbolizer stroke="#a89060" stroke-width="10" stroke-linejoin="round" stroke-linecap="round"/>
+    </Rule>
+    <Rule>
+      <Filter>[highway] = 'residential' or [highway] = 'unclassified' or [highway] = 'living_street'</Filter>
+      <LineSymbolizer stroke="#bbbbbb" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/>
+    </Rule>
+    <Rule>
+      <Filter>[highway] = 'service'</Filter>
+      <LineSymbolizer stroke="#cccccc" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round"/>
+    </Rule>
+  </Style>
+
+  <Style name="roads-fill">
+    <Rule>
+      <Filter>[highway] = 'motorway' or [highway] = 'trunk'</Filter>
+      <LineSymbolizer stroke="#fc9e49" stroke-width="10" stroke-linejoin="round" stroke-linecap="round"/>
+    </Rule>
+    <Rule>
+      <Filter>[highway] = 'primary'</Filter>
+      <LineSymbolizer stroke="#fcd6a4" stroke-width="8.5" stroke-linejoin="round" stroke-linecap="round"/>
+    </Rule>
+    <Rule>
+      <Filter>[highway] = 'secondary' or [highway] = 'tertiary'</Filter>
+      <LineSymbolizer stroke="#f7fabf" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+    </Rule>
+    <Rule>
+      <Filter>[highway] = 'residential' or [highway] = 'unclassified' or [highway] = 'living_street'</Filter>
+      <LineSymbolizer stroke="#ffffff" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+    </Rule>
+    <Rule>
+      <Filter>[highway] = 'service'</Filter>
+      <LineSymbolizer stroke="#ffffff" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+    </Rule>
+    <Rule>
+      <Filter>[highway] = 'footway' or [highway] = 'path' or [highway] = 'cycleway' or [highway] = 'steps'</Filter>
+      <LineSymbolizer stroke="#fa8072" stroke-width="1.6" stroke-dasharray="4,2"/>
+    </Rule>
+    <Rule>
+      <Filter>[highway] = 'pedestrian'</Filter>
+      <LineSymbolizer stroke="#dddde8" stroke-width="5" stroke-linejoin="round"/>
+    </Rule>
+  </Style>
+
+  <!-- ============================ labels ============================= -->
+  <Style name="road-labels">
+    <Rule>
+      <Filter>[highway] = 'motorway' or [highway] = 'trunk' or [highway] = 'primary'
+              or [highway] = 'secondary' or [highway] = 'tertiary' or [highway] = 'residential'</Filter>
+      <TextSymbolizer face-name="DejaVu Sans Book" size="11" fill="#333333"
+                      halo-fill="#ffffff" halo-radius="1.5"
+                      placement="line" spacing="300" minimum-distance="40"
+                      max-char-angle-delta="30">[name]</TextSymbolizer>
+    </Rule>
+  </Style>
+
+  <!-- POI icons. A MarkersSymbolizer with a file= draws that image; without
+       one mapnik falls back to its built-in ellipse, which is why the earlier
+       version of this stylesheet produced plain dots. -->
+  <Style name="places">
+    <Rule>
+      <Filter>[tourism] = 'hotel' or [tourism] = 'hostel' or [tourism] = 'guest_house'</Filter>
+      <MarkersSymbolizer file="icons/hotel.svg" allow-overlap="false"/>
+    </Rule>
+    <Rule>
+      <Filter>[tourism] = 'museum' or [tourism] = 'gallery'</Filter>
+      <MarkersSymbolizer file="icons/museum.svg" allow-overlap="false"/>
+    </Rule>
+    <Rule>
+      <Filter>[tourism] = 'artwork' or [tourism] = 'attraction' or [tourism] = 'viewpoint'</Filter>
+      <MarkersSymbolizer file="icons/artwork.svg" allow-overlap="false"/>
+    </Rule>
+    <Rule>
+      <Filter>[railway] = 'station'</Filter>
+      <MarkersSymbolizer file="icons/station.svg" allow-overlap="false"/>
+    </Rule>
+    <Rule>
+      <Filter>[tourism] = 'information'</Filter>
+      <MarkersSymbolizer file="icons/information.svg" allow-overlap="false"/>
+    </Rule>
+    <Rule>
+      <ElseFilter/>
+      <MarkersSymbolizer fill="#ac39ac" stroke="#ffffff" stroke-width="1.2" width="8" height="8"
+                         allow-overlap="false"/>
+    </Rule>
+  </Style>
+
+  <Style name="place-labels">
+    <Rule>
+      <TextSymbolizer face-name="DejaVu Sans Book" size="12" fill="#111111"
+                      halo-fill="#ffffff" halo-radius="1.5" dy="-12"
+                      wrap-width="90" minimum-distance="6">[name]</TextSymbolizer>
+    </Rule>
+  </Style>
+
+  <!-- ============================ layers ============================= -->
+  <Layer name="landuse" srs="epsg:4326">
+    <StyleName>landuse</StyleName>
+    <Datasource>
+      <Parameter name="type">geojson</Parameter>
+      <Parameter name="file">landuse.geojson</Parameter>
+    </Datasource>
+  </Layer>
+
+  <Layer name="water" srs="epsg:4326">
+    <StyleName>water</StyleName>
+    <Datasource>
+      <Parameter name="type">geojson</Parameter>
+      <Parameter name="file">water.geojson</Parameter>
+    </Datasource>
+  </Layer>
+
+  <Layer name="buildings" srs="epsg:4326">
+    <StyleName>buildings</StyleName>
+    <Datasource>
+      <Parameter name="type">geojson</Parameter>
+      <Parameter name="file">buildings.geojson</Parameter>
+    </Datasource>
+  </Layer>
+
+  <Layer name="roads" srs="epsg:4326">
+    <StyleName>roads-casing</StyleName>
+    <StyleName>roads-fill</StyleName>
+    <StyleName>road-labels</StyleName>
+    <Datasource>
+      <Parameter name="type">geojson</Parameter>
+      <Parameter name="file">roads.geojson</Parameter>
+    </Datasource>
+  </Layer>
+
+  <Layer name="places" srs="epsg:4326">
+    <StyleName>places</StyleName>
+    <StyleName>place-labels</StyleName>
+    <Datasource>
+      <Parameter name="type">geojson</Parameter>
+      <Parameter name="file">places.geojson</Parameter>
+    </Datasource>
+  </Layer>
+
+</Map>
