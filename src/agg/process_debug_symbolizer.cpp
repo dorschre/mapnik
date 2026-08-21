@@ -220,6 +220,8 @@ void agg_renderer<T0, T1>::process(debug_symbolizer const& sym,
                                    mapnik::feature_impl& feature,
                                    proj_transform const& prj_trans)
 {
+    auto const _tracked = track(sym, feature, display_element_type::debug);
+
     debug_symbolizer_mode_enum mode =
       get<debug_symbolizer_mode_enum>(sym,
                                       keys::mode,

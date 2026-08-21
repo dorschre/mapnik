@@ -292,6 +292,8 @@ source = Split(
     util/math.cpp
     util/mapped_memory_file.cpp
     value.cpp
+    visibility_tracker.cpp
+    visual_ground_truth.cpp
     """
     )
 

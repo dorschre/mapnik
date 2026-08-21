@@ -36,6 +36,7 @@
 #include <mapnik/symbolizer_enumerations.hpp>
 #include <mapnik/renderer_common.hpp>
 #include <mapnik/image_util.hpp>
+#include <mapnik/visibility_tracker.hpp>
 // stl
 #include <memory>
 #include <stack>
@@ -138,6 +139,12 @@ class MAPNIK_DECL agg_renderer : public feature_style_processor<agg_renderer<T0>
     ~agg_renderer();
     void start_map_processing(Map const& map);
     void end_map_processing(Map const& map);
+
+    // Optional visual ground-truth extraction. Must be called before apply().
+    // Passing nullptr (the default) leaves rendering completely unchanged and
+    // allocates no tracking state.
+    void set_render_observer(render_observer* observer) { observer_ = observer; }
+
     void start_layer_processing(layer const& lay, box2d<double> const& query_extent);
     void end_layer_processing(layer const& lay);
 
@@ -173,7 +180,13 @@ class MAPNIK_DECL agg_renderer : public feature_style_processor<agg_renderer<T0>
     void painted(bool painted);
     bool painted();
 
-    inline eAttributeCollectionPolicy attribute_collection_policy() const { return DEFAULT; }
+    eAttributeCollectionPolicy attribute_collection_policy() const;
+
+    // Starts tracking one concrete graphical occurrence. Inert without an observer.
+    element_scope track(symbolizer_base const& sym,
+                        feature_impl const& feature,
+                        display_element_type type,
+                        value rendered_text = value());
 
     inline double scale_factor() const { return common_.scale_factor_; }
 
@@ -193,6 +206,8 @@ class MAPNIK_DECL agg_renderer : public feature_style_processor<agg_renderer<T0>
     gamma_method_enum gamma_method_;
     double gamma_;
     renderer_common common_;
+    render_observer* observer_;
+    std::unique_ptr<visibility_tracker> tracker_;
     void setup(Map const& m, buffer_type& pixmap);
 };
 

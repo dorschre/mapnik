@@ -92,6 +92,8 @@ void agg_renderer<T0, T1>::process(line_symbolizer const& sym,
                                    proj_transform const& prj_trans)
 
 {
+    auto const _tracked = track(sym, feature, display_element_type::line);
+
     color const& col = get<color, keys::stroke>(sym, feature, common_.vars_);
     unsigned const r = col.red();
     unsigned const g = col.green();

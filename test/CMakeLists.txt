@@ -77,6 +77,7 @@ add_executable(mapnik-test-unit
     unit/pixel/palette.cpp
     unit/projection/proj_transform.cpp
     unit/renderer/buffer_size_scale_factor.cpp
+    unit/renderer/visual_ground_truth.cpp
     unit/renderer/cairo_io.cpp
     unit/renderer/feature_style_processor.cpp
     unit/serialization/wkb_formats_test.cpp

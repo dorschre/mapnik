@@ -243,6 +243,7 @@ bool placement_finder::find_point_placement(pixel_position const& pos)
     // do not render text off the canvas
     if (extent_.intersects(label_box))
     {
+        glyphs->set_text(layouts_.text());
         placements_.push_back(std::move(glyphs));
     }
 
@@ -415,6 +416,7 @@ bool placement_finder::single_line_placement(vertex_cache& pp, text_upright_e or
     // do not render text off the canvas
     if (extent_.intersects(label_box))
     {
+        glyphs->set_text(layouts_.text());
         placements_.push_back(std::move(glyphs));
     }
 

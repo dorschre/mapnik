@@ -255,6 +255,8 @@ void agg_renderer<T0, T1>::process(line_pattern_symbolizer const& sym,
                                    mapnik::feature_impl& feature,
                                    proj_transform const& prj_trans)
 {
+    auto const _tracked = track(sym, feature, display_element_type::line_pattern);
+
     std::string filename = get<std::string, keys::file>(sym, feature, common_.vars_);
     if (filename.empty())
         return;

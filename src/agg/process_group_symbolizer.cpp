@@ -164,6 +164,8 @@ void agg_renderer<T0, T1>::process(group_symbolizer const& sym,
                                    mapnik::feature_impl& feature,
                                    proj_transform const& prj_trans)
 {
+    auto const _tracked = track(sym, feature, display_element_type::group);
+
     thunk_renderer<buffer_type> ren(*this, ras_ptr, buffers_.top().get(), common_);
 
     render_group_symbolizer(sym, feature, common_.vars_, prj_trans, clipping_extent(common_), common_, ren);

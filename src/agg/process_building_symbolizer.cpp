@@ -55,6 +55,8 @@ void agg_renderer<T0, T1>::process(building_symbolizer const& sym,
                                    mapnik::feature_impl& feature,
                                    proj_transform const& prj_trans)
 {
+    auto const _tracked = track(sym, feature, display_element_type::building);
+
     using ren_base = agg::renderer_base<agg::pixfmt_rgba32_pre>;
     using renderer = agg::renderer_scanline_aa_solid<ren_base>;
 

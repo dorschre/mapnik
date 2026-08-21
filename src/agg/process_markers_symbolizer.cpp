@@ -63,14 +63,29 @@ struct agg_markers_renderer_context : markers_renderer_context
                                  feature_impl const& feature,
                                  attributes const& vars,
                                  BufferType& buf,
-                                 RasterizerType& ras)
+                                 RasterizerType& ras,
+                                 visibility_tracker* tracker,
+                                 image_rgba8 const& target)
         : buf_(buf),
           pixf_(buf_),
           renb_(pixf_),
-          ras_(ras)
+          ras_(ras),
+          sym_(sym),
+          feature_(feature),
+          tracker_(tracker),
+          target_(target)
     {
         auto comp_op = get<composite_mode_e, keys::comp_op>(sym, feature, vars);
         pixf_.comp_op(static_cast<agg::comp_op_e>(comp_op));
+    }
+
+    // Every accepted marker placement is its own graphical occurrence, so a
+    // placement covered later disappears independently of its siblings.
+    element_scope track_placement() const
+    {
+        if (!tracker_)
+            return element_scope();
+        return element_scope(tracker_, target_, feature_, sym_, display_element_type::markers);
     }
 
     virtual void render_marker(svg_path_ptr const& src,
@@ -79,6 +94,7 @@ struct agg_markers_renderer_context : markers_renderer_context
                                markers_dispatch_params const& params,
                                agg::trans_affine const& marker_tr)
     {
+        auto const tracked = track_placement();
         SvgRenderer svg_renderer(path, group_attrs);
         render_vector_marker(svg_renderer,
                              ras_,
@@ -94,6 +110,7 @@ struct agg_markers_renderer_context : markers_renderer_context
     {
         // In the long term this should be a visitor pattern based on the type of
         // render src provided that converts the destination pixel type required.
+        auto const tracked = track_placement();
         render_raster_marker(renb_, ras_, src, marker_tr, params.opacity, params.scale_factor, params.snap_to_pixels);
     }
 
@@ -102,6 +119,10 @@ struct agg_markers_renderer_context : markers_renderer_context
     pixfmt_type pixf_;
     renderer_base renb_;
     RasterizerType& ras_;
+    symbolizer_base const& sym_;
+    feature_impl const& feature_;
+    visibility_tracker* tracker_;
+    image_rgba8 const& target_;
 };
 
 } // namespace detail
@@ -138,7 +159,8 @@ void agg_renderer<T0, T1>::process(markers_symbolizer const& sym,
     box2d<double> clip_box = clipping_extent(common_);
 
     using renderer_context_type = detail::agg_markers_renderer_context<svg_renderer_type, buf_type, rasterizer>;
-    renderer_context_type renderer_context(sym, feature, common_.vars_, render_buffer, *ras_ptr);
+    renderer_context_type
+      renderer_context(sym, feature, common_.vars_, render_buffer, *ras_ptr, tracker_.get(), current_buffer);
 
     render_markers_symbolizer(sym, feature, prj_trans, common_, clip_box, renderer_context);
 }

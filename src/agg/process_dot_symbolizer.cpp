@@ -100,6 +100,8 @@ void agg_renderer<T0, T1>::process(dot_symbolizer const& sym,
                                    mapnik::feature_impl& feature,
                                    proj_transform const& prj_trans)
 {
+    auto const _tracked = track(sym, feature, display_element_type::dot);
+
     double width = 0.0;
     double height = 0.0;
     bool const has_width = has_key(sym, keys::width);

@@ -26,6 +26,8 @@
 // mapnik
 #include <mapnik/geometry/box2d.hpp>
 #include <mapnik/pixel_position.hpp>
+#include <mapnik/value/types.hpp>
+#include <unicode/unistr.h>
 #include <mapnik/marker_cache.hpp>
 #include <mapnik/text/glyph_info.hpp>
 
@@ -86,12 +88,17 @@ class glyph_positions
 
     pixel_position const& get_base_point() const;
     void set_base_point(pixel_position const& base_point);
+    // Text this placement lays out, as produced by the layout (so after any
+    // text-transform and line breaking). Used for visual ground truth.
+    value_unicode_string const& text() const;
+    void set_text(value_unicode_string const& text);
     void set_marker(marker_info_ptr marker, pixel_position const& marker_pos);
     marker_info_ptr const& get_marker() const;
     pixel_position const& marker_pos() const;
 
   private:
     std::vector<glyph_position> data_;
+    value_unicode_string text_;
     pixel_position base_point_;
     marker_info_ptr marker_info_;
     pixel_position marker_pos_;

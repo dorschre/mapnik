@@ -57,6 +57,16 @@ void glyph_positions::reserve(unsigned count)
     data_.reserve(count);
 }
 
+value_unicode_string const& glyph_positions::text() const
+{
+    return text_;
+}
+
+void glyph_positions::set_text(value_unicode_string const& text)
+{
+    text_ = text;
+}
+
 pixel_position const& glyph_positions::get_base_point() const
 {
     return base_point_;

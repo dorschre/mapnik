@@ -70,7 +70,9 @@ agg_renderer<T0, T1>::agg_renderer(Map const& m, T0& pixmap, double scale_factor
       ras_ptr(std::make_unique<rasterizer>()),
       gamma_method_(gamma_method_enum::GAMMA_POWER),
       gamma_(1.0),
-      common_(m, attributes(), offset_x, offset_y, m.width(), m.height(), scale_factor)
+      common_(m, attributes(), offset_x, offset_y, m.width(), m.height(), scale_factor),
+      observer_(nullptr),
+      tracker_()
 {
     setup(m, pixmap);
 }
@@ -90,7 +92,9 @@ agg_renderer<T0, T1>::agg_renderer(Map const& m,
       ras_ptr(std::make_unique<rasterizer>()),
       gamma_method_(gamma_method_enum::GAMMA_POWER),
       gamma_(1.0),
-      common_(m, req, vars, offset_x, offset_y, req.width(), req.height(), scale_factor)
+      common_(m, req, vars, offset_x, offset_y, req.width(), req.height(), scale_factor),
+      observer_(nullptr),
+      tracker_()
 {
     setup(m, pixmap);
 }
@@ -109,7 +113,9 @@ agg_renderer<T0, T1>::agg_renderer(Map const& m,
       ras_ptr(std::make_unique<rasterizer>()),
       gamma_method_(gamma_method_enum::GAMMA_POWER),
       gamma_(1.0),
-      common_(m, attributes(), offset_x, offset_y, m.width(), m.height(), scale_factor, detector)
+      common_(m, attributes(), offset_x, offset_y, m.width(), m.height(), scale_factor, detector),
+      observer_(nullptr),
+      tracker_()
 {
     setup(m, pixmap);
 }
@@ -201,11 +207,30 @@ void agg_renderer<T0, T1>::start_map_processing(Map const& map)
 {
     MAPNIK_LOG_DEBUG(agg_renderer) << "agg_renderer: Start map processing bbox=" << map.get_current_extent();
     ras_ptr->clip_box(0, 0, common_.width_, common_.height_);
+    if (observer_)
+    {
+        // The background is painted by setup() and is not a tracked element.
+        tracker_ = std::make_unique<visibility_tracker>(*observer_, buffers_.top().get());
+        tracker_->set_variables(&common_.vars_);
+        map_info info;
+        info.width = common_.width_;
+        info.height = common_.height_;
+        info.srs = map.srs();
+        info.extent = map.get_current_extent();
+        info.scale_factor = common_.scale_factor_;
+        if (map.background())
+            info.background_color = map.background()->to_hex_string();
+        observer_->begin_map(info);
+    }
 }
 
 template<typename T0, typename T1>
 void agg_renderer<T0, T1>::end_map_processing(Map const& map)
 {
+    if (tracker_)
+    {
+        tracker_->finalize();
+    }
     mapnik::demultiply_alpha(buffers_.top().get());
     MAPNIK_LOG_DEBUG(agg_renderer) << "agg_renderer: End map processing";
 }
@@ -238,6 +263,11 @@ void agg_renderer<T0, T1>::start_layer_processing(layer const& lay, box2d<double
     {
         buffers_.emplace(buffers_.top().get());
     }
+    if (tracker_)
+    {
+        tracker_->push_layer(&lay);
+        tracker_->push_target(buffers_.top().get());
+    }
 }
 
 template<typename T0, typename T1>
@@ -254,6 +284,11 @@ void agg_renderer<T0, T1>::end_layer_processing(layer const& lyr)
         composite_mode_e comp_op = lyr.comp_op() ? *lyr.comp_op() : src_over;
         composite(previous_buffer, current_buffer, comp_op, lyr.get_opacity(), 0, 0);
         internal_buffers_.pop();
+    }
+    if (tracker_)
+    {
+        tracker_->pop_target(previous_buffer);
+        tracker_->pop_layer();
     }
 }
 
@@ -305,6 +340,10 @@ void agg_renderer<T0, T1>::start_style_processing(feature_type_style const& st)
         common_.t_.set_offset(0);
         ras_ptr->clip_box(0, 0, common_.width_, common_.height_);
         buffers_.emplace(buffers_.top().get());
+    }
+    if (tracker_)
+    {
+        tracker_->push_target(buffers_.top().get());
     }
 }
 
@@ -359,6 +398,10 @@ void agg_renderer<T0, T1>::end_style_processing(feature_type_style const& st)
             util::apply_visitor(visitor, filter_tag);
         }
         mapnik::premultiply_alpha(previous_buffer);
+    }
+    if (tracker_)
+    {
+        tracker_->pop_target(previous_buffer);
     }
     MAPNIK_LOG_DEBUG(agg_renderer) << "agg_renderer: End processing style";
 }
@@ -556,6 +599,25 @@ template<typename T0, typename T1>
 bool agg_renderer<T0, T1>::painted()
 {
     return buffers_.top().get().painted();
+}
+
+template<typename T0, typename T1>
+eAttributeCollectionPolicy agg_renderer<T0, T1>::attribute_collection_policy() const
+{
+    // Requesting every attribute makes them available to the observer; it does
+    // not make any of them visually observable.
+    return (observer_ && observer_->requires_all_attributes()) ? COLLECT_ALL : DEFAULT;
+}
+
+template<typename T0, typename T1>
+element_scope agg_renderer<T0, T1>::track(symbolizer_base const& sym,
+                                          feature_impl const& feature,
+                                          display_element_type type,
+                                          value rendered_text)
+{
+    if (!tracker_)
+        return element_scope();
+    return element_scope(tracker_.get(), buffers_.top().get(), feature, sym, type, std::move(rendered_text));
 }
 
 template<typename T0, typename T1>

@@ -135,6 +135,8 @@ target_sources(mapnik PRIVATE
     twkb.cpp
     unicode.cpp
     value.cpp
+    visibility_tracker.cpp
+    visual_ground_truth.cpp
     vertex_adapters.cpp
     vertex_cache.cpp
     warp.cpp

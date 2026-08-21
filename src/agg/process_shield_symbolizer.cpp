@@ -77,6 +77,9 @@ void agg_renderer<T0, T1>::process(shield_symbolizer const& sym,
     placements_list const& placements = helper.get();
     for (auto const& glyphs : placements)
     {
+        // One element per accepted placement, covering both the shield marker
+        // and its text - they are a single graphical occurrence.
+        auto const _tracked = track(sym, feature, display_element_type::shield, value(glyphs->text()));
         marker_info_ptr const mark = glyphs->get_marker();
         if (mark)
         {

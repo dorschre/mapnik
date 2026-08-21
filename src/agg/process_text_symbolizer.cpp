@@ -83,6 +83,9 @@ void agg_renderer<T0, T1>::process(text_symbolizer const& sym,
     placements_list const& placements = helper.get();
     for (auto const& glyphs : placements)
     {
+        // One element per accepted placement: a placement rejected by the
+        // collision detector never reaches this loop.
+        auto const _tracked = track(sym, feature, display_element_type::text, value(glyphs->text()));
         ren.render(*glyphs);
     }
 }
