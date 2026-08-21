@@ -118,6 +118,10 @@ class MAPNIK_DECL visual_ground_truth_collector : public render_observer
     double simplify_tolerance_ = 0.5;
     std::size_t rendered_count_ = 0;
     map_info map_{0, 0, {}, box2d<double>(), {}, 1.0};
+    // The viewport in geographic coordinates. Consumers that describe the map
+    // (GeoJSON, RDF, anything OGC-shaped) need lon/lat, and only the renderer
+    // knows the projection, so it is computed here rather than guessed later.
+    std::optional<box2d<double>> extent_wgs84_;
     std::vector<pending_element> pending_;
     std::map<feature_key, std::map<std::string, value>> attributes_;
     std::vector<displayed_element> displayed_;

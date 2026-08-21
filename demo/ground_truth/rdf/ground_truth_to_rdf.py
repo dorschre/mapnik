@@ -143,13 +143,21 @@ def is_web_mercator(crs):
     return "+proj=merc" in normalized and "+a=6378137" in normalized and "+b=6378137" in normalized
 
 
-def viewport_wkt(extent, crs):
-    """CRS84 envelope polygon of the viewport, or None if we cannot compute it."""
-    minx, miny, maxx, maxy = extent
-    if is_web_mercator(crs):
-        (minx, miny), (maxx, maxy) = mercator_to_lonlat(minx, miny), mercator_to_lonlat(maxx, maxy)
-    elif crs.lower() not in {"epsg:4326", "crs84", "urn:ogc:def:crs:ogc:1.3:crs84"}:
-        return None
+def viewport_wkt(extent, crs, extent_wgs84=None):
+    """CRS84 envelope polygon of the viewport, or None if we cannot compute it.
+
+    The renderer reprojects the viewport itself when it can, which is the only
+    way to get a viewport for a CRS this script does not know how to unproject
+    (UTM, for instance). Prefer that answer whenever it is present.
+    """
+    if extent_wgs84:
+        minx, miny, maxx, maxy = extent_wgs84
+    else:
+        minx, miny, maxx, maxy = extent
+        if is_web_mercator(crs):
+            (minx, miny), (maxx, maxy) = mercator_to_lonlat(minx, miny), mercator_to_lonlat(maxx, maxy)
+        elif crs.lower() not in {"epsg:4326", "crs84", "urn:ogc:def:crs:ogc:1.3:crs84"}:
+            return None
     ring = [(minx, miny), (maxx, miny), (maxx, maxy), (minx, maxy), (minx, miny)]
     coords = ", ".join("{:.6f} {:.6f}".format(x, y) for x, y in ring)
     return "{} POLYGON (({}))".format(CRS84, coords)
@@ -379,7 +387,7 @@ class Converter:
         scale = scale_denominator(info["extent"], info["width"], info["crs"])
         if scale is not None:
             self.add(config, CG.scaleDenominator, decimal(scale))
-        wkt = viewport_wkt(info["extent"], info["crs"])
+        wkt = viewport_wkt(info["extent"], info["crs"], info.get("extent_wgs84"))
         if wkt:
             self.add(config, CG.viewportWkt, Literal(wkt, datatype=GEO.wktLiteral))
         self.add(self.render_activity, PROV.used, config)
@@ -401,7 +409,7 @@ class Converter:
         zoom = self.zoom_level()
         if zoom is not None:
             self.add(self.map_uri, CG.zoomLevel, decimal(zoom))
-        wkt = viewport_wkt(info["extent"], info["crs"])
+        wkt = viewport_wkt(info["extent"], info["crs"], info.get("extent_wgs84"))
         if wkt:
             self.add(self.map_uri, CG.viewportWkt, Literal(wkt, datatype=GEO.wktLiteral))
         scale = scale_denominator(info["extent"], info["width"], info["crs"])

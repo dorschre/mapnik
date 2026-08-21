@@ -27,6 +27,8 @@
 #include <mapnik/layer.hpp>
 #include <mapnik/unicode.hpp>
 #include <mapnik/color.hpp>
+#include <mapnik/proj_transform.hpp>
+#include <mapnik/projection.hpp>
 #include <mapnik/symbolizer.hpp>
 #include <mapnik/symbolizer_keys.hpp>
 #include <mapnik/text/placements/base.hpp>
@@ -357,6 +359,23 @@ void extract_portrayal(displayed_element& element,
 void visual_ground_truth_collector::begin_map(map_info const& info)
 {
     map_ = info;
+    extent_wgs84_.reset();
+    if (map_.srs.empty())
+        return;
+    try
+    {
+        projection const source(map_.srs, true);
+        projection const target("epsg:4326", true);
+        proj_transform const transform(source, target);
+        box2d<double> geographic = map_.extent;
+        if (transform.forward(geographic))
+            extent_wgs84_ = geographic;
+    }
+    catch (std::exception const&)
+    {
+        // An unknown or unusable projection is not fatal: the geographic
+        // extent is simply omitted rather than reported wrongly.
+    }
 }
 
 void visual_ground_truth_collector::begin_element(render_event const& event)
@@ -510,6 +529,14 @@ void visual_ground_truth_collector::to_json(std::ostream& out) const
     {
         out << ",\n    \"background_color\": ";
         write_escaped(out, map_.background_color);
+    }
+    if (extent_wgs84_)
+    {
+        // Nine digits keeps sub-millimetre precision in degrees.
+        auto const previous = out.precision(9);
+        out << ",\n    \"extent_wgs84\": [" << extent_wgs84_->minx() << ", " << extent_wgs84_->miny() << ", "
+            << extent_wgs84_->maxx() << ", " << extent_wgs84_->maxy() << "]";
+        out.precision(previous);
     }
     out << ",\n    \"scale_factor\": " << map_.scale_factor;
     out << ",\n    \"rendered_element_count\": " << rendered_count_;
