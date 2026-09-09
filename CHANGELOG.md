@@ -6,6 +6,36 @@ Developers: Please commit along with changes.
 
 For a complete change history, see the git log.
 
+## Unreleased
+
+- Move ADV DLM50 acquisition and RDF decoding into OTTO's separate
+  `adv-dlm50-adapter` component; preserve Mapnik's existing command entry points.
+- Restore DTK50 presentation symbols and labels in the batch render default;
+  fit source-sized SVGs to their painted extent instead of adding stroke twice.
+- Resolve referenced DLM50 road parents automatically during ADV batch
+  acquisition, with validated SPARQL batches and repair of saved snapshots.
+- Correct DTK50 Mapnik stylesheet marker rotation, stroke-inclusive SVG
+  oversizing, omitted catalog graphic scales and viewport resolution, and retain fractional stroke,
+  dash and text dimensions; add a
+  frozen-input restyling workflow with pixel regression tests and comparisons.
+- Correct DTK50 batch presentation permissions and terrain context, and support
+  fetching missing ADV road-parent classifications without changing source IDs.
+- Add aligned official NRW/Saxony DTK50 raster references through ADV's WMS
+  proxy, with source metadata, blank-image checks, and gallery comparison sliders.
+- Add an NRW/Saxony DLM50 comparison batch through ADV, with global pagination,
+  state identity checks, and lossless decoding of dump GML namespace/CRS aliases
+  and structured place names.
+- Add ADV-wrapper batch acquisition with explicit provider failures, pagination,
+  and native-GML/GeoSPARQL geometry consistency checks.
+- Add a shared Berlin-area map/knowledge-graph batch with aligned OSM references
+  and a comparison gallery; skip empty product geometries before GeoJSON export.
+- Preserve ATKIS RDF source IRIs and original CRS geometries in ground-truth
+  RDF, and carry completeness reports for explicitly requested previews.
+- Add OpenTopoMap and Humanitarian OSM ground-truth workflows using pinned
+  upstream styles, regional PostGIS snapshots, elevation data and linked RDF.
+- Link ground-truth RDF maps to their rendered PNG with a document-relative
+  `cg:imageUrl`; allow overriding the image IRI with `--image-url`.
+
 ## Mapnik 4.3.0
 
 Released July 24th, 2026

@@ -41,7 +41,8 @@ import math
 import os
 import re
 import sys
-from urllib.parse import quote
+from pathlib import Path
+from urllib.parse import quote, urljoin
 
 try:
     from rdflib import Graph, Literal, Namespace, URIRef, BNode
@@ -253,8 +254,9 @@ class Converter:
     SELF = "https://maptrace.invalid/self"
 
     def __init__(self, truth, base, geometry_format="wkt", source_geometries=None, zoom=None,
-                 include_candidates=True, infer_cased_lines=False, relative="fragment"):
+                 include_candidates=True, infer_cased_lines=False, relative="fragment", image_url=None):
         self.truth = truth
+        self.image_url = image_url
         # Two namespaces on purpose:
         #   terms  - predicates and feature classes. Absolute and stable: a
         #            vocabulary that moved with the file would be no vocabulary.
@@ -401,8 +403,14 @@ class Converter:
 
     def emit_map(self):
         info = self.truth["map"]
+        coverage = self.truth.get("coverage")
+        if coverage is not None:
+            self.add(self.map_uri, self.terms.complete, Literal(bool(coverage.get("complete", False))))
+            self.add(self.map_uri, self.terms.coverageReport, Literal(json.dumps(coverage, sort_keys=True)))
         self.add(self.map_uri, RDF.type, CG.MapImage)
         self.add(self.map_uri, RDF.type, PROV.Entity)
+        if self.image_url is not None:
+            self.add(self.map_uri, CG.imageUrl, URIRef(self.image_url))
         self.add(self.map_uri, CG.canvasWidthPx, Literal(info["width"], datatype=XSD.integer))
         self.add(self.map_uri, CG.canvasHeightPx, Literal(info["height"], datatype=XSD.integer))
         self.add(self.map_uri, CG.crs, text(info["crs"]))
@@ -431,6 +439,29 @@ class Converter:
         self.add(feature, RDF.type, self.terms[slug(layer).capitalize() + "Feature"])
         self.add(feature, CG.featureId, text(identity["feature_id"]))
 
+        sources = obj.get("source_properties", {}).get("source_uris", [])
+        if isinstance(sources, str):
+            sources = json.loads(sources)
+        if not isinstance(sources, list):
+            raise ValueError("source_uris must be a JSON array of absolute source IRIs")
+        for source in sources:
+            if not isinstance(source, str) or not re.match(r"^[A-Za-z][A-Za-z0-9+.-]*:", source):
+                raise ValueError("source_uris contains a non-absolute IRI")
+            self.add(feature, PROV.wasDerivedFrom, URIRef(source))
+            self.add(self.map_uri, PROV.wasDerivedFrom, URIRef(source))
+            geometry = self.truth.get("source_geometries", {}).get(source)
+            if geometry:
+                import hashlib
+                node = self.data["source-geometry-" + hashlib.sha256(source.encode()).hexdigest()[:20]]
+                crs = geometry["crs"]
+                if re.fullmatch(r"EPSG:\d+", crs):
+                    crs = "http://www.opengis.net/def/crs/EPSG/0/" + crs.split(":")[1]
+                elif crs == "OGC:CRS84":
+                    crs = "http://www.opengis.net/def/crs/OGC/1.3/CRS84"
+                self.add(URIRef(source), GEO.hasGeometry, node)
+                self.add(node, RDF.type, GEO.Geometry)
+                self.add(node, GEO.asWKT, Literal("<{}> {}".format(crs, geometry["wkt"]), datatype=GEO.wktLiteral))
+
         # Identity metadata is non-visual by definition; it lives on the source
         # feature, never on the visible object.
         for key, value in identity.items():
@@ -453,6 +484,8 @@ class Converter:
         # Source-only attributes, likewise never presented as visible. A null
         # attribute means the datasource had no value, which is not a value.
         for key, value in obj.get("source_properties", {}).items():
+            if key == "source_uris":
+                continue
             if value is None:
                 continue
             self.add(feature, self.terms[slug(key)], Literal(value))
@@ -607,6 +640,9 @@ def main():
                         help="how cg:pixelGeometry is written")
     parser.add_argument("--source-geojson", default=None,
                         help="directory of the GeoJSON the map was rendered from, to attach geo:hasGeometry")
+    parser.add_argument("--image-url", default=None,
+                        help="image IRI for cg:imageUrl; relative to the RDF document (default: "
+                             "the PNG alongside the input JSON, relative to the output file)")
     parser.add_argument("--zoom", type=float, default=None, help="override the derived zoom level")
     parser.add_argument("--no-candidates", action="store_true",
                         help="skip occurrences that left no visible pixel instead of recording them "
@@ -620,6 +656,18 @@ def main():
     if "elements" not in truth:
         sys.exit("this ground truth has no per-element data; re-render with a current mapnik-ground-truth-render")
 
+    suffix = {"turtle": ".ttl", "nt": ".nt", "json-ld": ".jsonld", "xml": ".rdf"}.get(opts.format, ".rdf")
+    output = opts.output or os.path.splitext(opts.ground_truth)[0] + suffix
+    image_url = opts.image_url
+    if image_url is None:
+        image_path = os.path.splitext(os.path.abspath(opts.ground_truth))[0] + ".png"
+        image_url = quote(os.path.relpath(image_path, os.path.dirname(os.path.abspath(output))).replace(os.sep, "/"),
+                          safe="/")
+    if opts.format != "turtle":
+        # Formats such as N-Triples require absolute IRIs. Turtle keeps the
+        # document-relative reference so PNG and RDF can move together.
+        image_url = urljoin(Path(output).absolute().as_uri(), image_url)
+
     converter = Converter(
         truth,
         base=opts.base,
@@ -629,11 +677,10 @@ def main():
         include_candidates=not opts.no_candidates,
         infer_cased_lines=opts.infer_cased_lines,
         relative=opts.relative,
+        image_url=image_url,
     )
     graph = converter.convert()
 
-    suffix = {"turtle": ".ttl", "nt": ".nt", "json-ld": ".jsonld", "xml": ".rdf"}.get(opts.format, ".rdf")
-    output = opts.output or os.path.splitext(opts.ground_truth)[0] + suffix
     if opts.relative == "none" or opts.format != "turtle":
         graph.serialize(destination=output, format=opts.format)
     else:
@@ -654,7 +701,7 @@ def main():
     print("  {:5} display elements".format(len(survivors)))
     print("  {:5} non-surviving candidates".format(len(truth.get("elements", [])) - len(survivors)))
     print("  {:5} visible objects".format(len(truth.get("objects", []))))
-    print("  {:5} features with source geometry".format(len(converter.source_geometries)))
+    print("  {:5} features with source geometry".format(len(converter.source_geometries) + len(truth.get("source_geometries", {}))))
 
 
 if __name__ == "__main__":

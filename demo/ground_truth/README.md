@@ -30,6 +30,10 @@ road appears once, with two displayed elements.
 
 ## Any stylesheet
 
+For classic **OpenTopoMap** and **Humanitarian OSM**, see
+[`map-products/README.md`](map-products/README.md). The workflow produces a PNG,
+ground-truth JSON and linked Turtle RDF for either product or both together.
+
 ```sh
 ./build/out/mapnik-ground-truth-render <map.xml> <prefix> \
     --size 1200 900 --extent-wgs84 minx miny maxx maxy \
@@ -181,6 +185,16 @@ python3 demo/ground_truth/rdf/validate_and_query.py demo/ground_truth/rdf/parise
 | `objects[].visible_properties.label` | `cg:visibleLabel` — image-grounded |
 | `objects[].source_properties` | predicates on the `geo:Feature`, never on the visible object |
 
+The RDF CLI also links the map to its rendered image with
+`cg:imageUrl <area01.png>`. By default it uses the PNG alongside the input JSON
+and writes its path relative to the output Turtle document. Moving the PNG and
+Turtle together preserves the link. Use `--image-url ../images/area01.png` to
+override it, or pass `image_url=` when using `Converter` directly. Filenames
+are URI-escaped; non-Turtle output uses an absolute image IRI.
+
+Run the RDF converter regression tests with
+`python -m unittest discover -s demo/ground_truth/rdf -p 'test_*.py'`.
+
 `--source-geojson` joins the original GeoJSON back in so every `geo:Feature`
 gets a `geo:hasGeometry`; the ground truth itself deliberately carries no source
 geometry, and the shapes treat it as optional.
@@ -202,6 +216,25 @@ renderer reported.
 
 Pixel coordinates are canvas coordinates: origin top-left, y growing downwards,
 boxes half-open, rings on pixel corners.
+
+## ATKIS RDF inputs
+
+For a shared Berlin/Brandenburg batch across DTK50, OSM Standard, OpenTopoMap,
+and Humanitarian OSM, see [`berlin-batch/README.md`](berlin-batch/README.md).
+The first five-area batch includes maps, knowledge graphs, aligned official
+OSM service references, and an interactive comparison gallery. DTK50 outputs
+are explicitly marked incomplete previews with per-map coverage reports.
+The batch now has an [ADV-wrapper acquisition path](berlin-batch/README.md)
+using `https://wunderfacts.com/adv/`. Provider failures are reported explicitly;
+there is no automatic fallback to InspireWrapper or direct WFS.
+
+The companion `otto-usecase-3/data-pipeline/gpkg-to-dtk50` project now supports
+direct RDF snapshots through `map-fetch-inspire` and `map-render-rdf`; see its
+`docs/rdf-input.md` for setup and completeness checks. The converter accepts
+JSON-encoded `source_properties.source_uris` arrays and emits
+`prov:wasDerivedFrom` links to those original resources. Optional top-level
+`source_geometries` records attach CRS-qualified WKT, while `coverage` records
+whether the output is complete or an explicitly requested preview.
 
 ## Annotator options
 
