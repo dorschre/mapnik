@@ -1,0 +1,25 @@
+# One church source feature per map, merging its rendered church-symbol boxes.
+# This deliberately excludes building footprints and labels.
+PREFIX cg: <https://w3id.org/cartograph#>
+PREFIX ex: <https://example.org/maptrace/terms/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+SELECT ?map ?source
+       (MIN(?x1) AS ?minX) (MIN(?y1) AS ?minY)
+       (MAX(?x2) AS ?maxX) (MAX(?y2) AS ?maxY)
+       (COUNT(DISTINCT ?element) AS ?drawingElements)
+WHERE {
+  ?element a cg:PointElement ;
+           cg:anchorDimension 0 ;
+           cg:inMap ?map ;
+           cg:depictsFeature ?feature ;
+           cg:pixelBboxMinX ?x1 ;
+           cg:pixelBboxMinY ?y1 ;
+           cg:pixelBboxMaxX ?x2 ;
+           cg:pixelBboxMaxY ?y2 .
+  ?feature ex:feature_type "AX_Gebaeude" ;
+           ex:class_name "AX_Gebaeude_SYM24000" ;
+           prov:wasDerivedFrom ?source .
+}
+GROUP BY ?map ?source
+ORDER BY ?map ?source

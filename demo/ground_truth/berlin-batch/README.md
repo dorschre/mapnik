@@ -1,5 +1,11 @@
 # Berlin and Brandenburg map batch
 
+## Four-state 100-map batch
+
+See [the four-state batch](../dlm50-batch/README.md) for 25 DTK50 maps and knowledge
+graphs each from NRW, Saxony, Hesse and Rhineland-Palatinate, with resumable
+acquisition, bounded rendering workers and a live validated-output gallery.
+
 ## ADV adapter component
 
 ADV acquisition and RDF decoding now live in the separate OTTO component:

@@ -8,6 +8,8 @@ For a complete change history, see the git log.
 
 ## Unreleased
 
+- Add a resumable four-state ADV DLM50 batch producing 25 DTK50 map/knowledge-graph
+  pairs per state, with buffered boundary checks, validation and a live gallery.
 - Move ADV DLM50 acquisition and RDF decoding into OTTO's separate
   `adv-dlm50-adapter` component; preserve Mapnik's existing command entry points.
 - Restore DTK50 presentation symbols and labels in the batch render default;

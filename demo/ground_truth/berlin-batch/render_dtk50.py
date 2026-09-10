@@ -5,6 +5,7 @@ Mapnik reprojects them onto the exact OSM/reference viewport in EPSG:3857.
 """
 import argparse
 import json
+import logging
 import os
 from pathlib import Path
 import subprocess
@@ -30,6 +31,10 @@ def render(area, batch, allow_preview, snapshots=None, output_root=None, present
     if metadata.get("transport") == "adv-wrapper":
         from adv_source import AdvFeatureSource
         source_class = AdvFeatureSource
+        # ADV's archived GML literals can omit XML namespace declarations.
+        # The adapter validates and repairs these during decoding; suppress
+        # rdflib's duplicate conversion tracebacks, not adapter exceptions.
+        logging.getLogger('rdflib.term').setLevel(logging.CRITICAL)
     source = source_class(snapshot)
     out = ((output_root or batch) / area["name"] / "dtk50").resolve()
     out.mkdir(parents=True, exist_ok=True)
