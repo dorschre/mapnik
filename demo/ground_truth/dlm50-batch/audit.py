@@ -14,7 +14,7 @@ def audit(batch, require_complete=False):
     progress=json.loads((public/'progress.json').read_text())
     areas=json.loads((batch/'areas.json').read_text())
     ready={a['name']:a for a in progress['areas'] if a['status']=='ready'}
-    if require_complete and len(ready)!=100: raise ValueError(f'Only {len(ready)}/100 ready')
+    if require_complete and len(ready)!=len(areas): raise ValueError(f'Only {len(ready)}/{len(areas)} ready')
     prefixes={'NRW':'DENW','Saxony':'DESN','Hesse':'DEHE','Rhineland-Palatinate':'DERP'}
     groups=defaultdict(list);hashes={};rows=[]
     for area in areas:

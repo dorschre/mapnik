@@ -120,3 +120,33 @@ Progress and failures are recorded in `progress.json`; detailed render/validatio
 logs are in `logs/<area>.log`. The coordinator exits nonzero if fewer than 100
 pairs finish. Inspect any failed area before retrying; cached success responses
 and already validated outputs are retained.
+
+## Larger batches and bounded storage
+
+The runner, gallery and audit derive their count from `areas.json`. A new batch
+must have its own directory; previously validated renders are reused on resume.
+The original `prepare.py` still selects the original 100 locations.
+
+For the 300-location collection, `build/dlm50-300-new/prepare-selection.py`
+selects 75 new named settlements per state from the pinned GeoNames cities500
+archive. It excludes overlapping previous and newly selected viewports, checks
+the complete buffered bbox against the state boundary, and records the selection
+in `selection.json`. GeoNames attribution: CC BY 4.0. Terrain classes remain
+approximate regional assumptions inherited from the nearest previous center.
+
+Use `run.py <batch> --workers 4 --compress-cache --compact-snapshots` to reduce
+storage. HTTP bodies are retained losslessly as `.body.gz`; their metadata hashes
+refer to the decompressed bytes. The runner restores these automatically on cache
+hits. After successful rendering and validation, each new source snapshot is
+archived as `snapshots/<area>/<state>.tar.gz`. Every file is compared by SHA-256
+before removing the raw directory. `<state>.tar.json` records file and archive
+checksums. Resume restores archived snapshots when needed. Existing symlinked
+snapshots are never compacted. No previous batch is deleted or overwritten.
+
+Acquisition stops below 16 GB free. The compressed client checks this before
+every HTTP request, including road-parent requests. Allow additional space for
+in-flight rendering, state ZIPs and optional flat exports. The runner's completion
+checks still require every configured area to validate successfully.
+
+Storage regression tests (use the DTK50 Python environment):
+`python -m unittest discover -s demo/ground_truth/dlm50-batch -p 'test_*.py'`.

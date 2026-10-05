@@ -2,6 +2,7 @@
 import argparse
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
+import gzip
 import hashlib
 import fcntl
 import json
@@ -12,9 +13,11 @@ import queue
 import shutil
 import subprocess
 import sys
+import tarfile
 import threading
 import time
 import zipfile
+from urllib.parse import urlencode
 
 ROOT=Path(__file__).resolve().parents[3]
 PIPELINE=ROOT.parent/'otto-usecase-3/data-pipeline/gpkg-to-dtk50'
@@ -51,16 +54,86 @@ class RetryClient(Client):
             time.sleep(15*(attempt+1))
 
 
+class CompressedRetryClient(RetryClient):
+    """Losslessly archive response bodies while preserving the adapter cache hashes."""
+    def _compressed(self, key, method, *args):
+        target = self.cache / (key + '.body')
+        packed = self.cache / (key + '.body.gz')
+        if not target.exists() and packed.exists():
+            target.write_bytes(gzip.decompress(packed.read_bytes()))
+        if shutil.disk_usage(self.cache.parent).free < 16_000_000_000:
+            raise RuntimeError('Less than 16 GB free; stopped before another HTTP request')
+        result = method(*args)
+        if target.exists():
+            temporary = packed.with_suffix('.tmp')
+            data = target.read_bytes()
+            encoded = gzip.compress(data, compresslevel=6, mtime=0)
+            assert gzip.decompress(encoded) == data
+            temporary.write_bytes(encoded)
+            temporary.replace(packed)
+            target.unlink()
+        return result
+
+    def get(self, url):
+        return self._compressed(hashlib.sha256(url.encode()).hexdigest(), super().get, url)
+
+    def post(self, url, form):
+        body = urlencode(form).encode()
+        key = hashlib.sha256(b'POST\n' + url.encode() + b'\n' + body).hexdigest()
+        return self._compressed(key, super().post, url, form)
+
+
+def compact_snapshot(snapshot):
+    """Verify every archived byte before removing this batch's raw snapshot."""
+    if snapshot.is_symlink():
+        return
+    archive = snapshot.with_suffix('.tar.gz')
+    temporary = archive.with_suffix('.tmp')
+    files = sorted(p for p in snapshot.rglob('*') if p.is_file())
+    expected = {str(p.relative_to(snapshot)): hashlib.sha256(p.read_bytes()).hexdigest() for p in files}
+    with tarfile.open(temporary, 'w:gz', compresslevel=6) as packed:
+        for path in files:
+            packed.add(path, arcname=str(path.relative_to(snapshot)))
+    with tarfile.open(temporary, 'r:gz') as packed:
+        actual = {m.name: hashlib.sha256(packed.extractfile(m).read()).hexdigest() for m in packed.getmembers()}
+    if actual != expected:
+        raise ValueError('Snapshot archive verification failed; raw files retained')
+    temporary.replace(archive)
+    atomic_json(archive.with_suffix('.json'), dict(files=expected, sha256=hashlib.sha256(archive.read_bytes()).hexdigest()))
+    shutil.rmtree(snapshot)
+
+
+def restore_snapshot(snapshot):
+    archive = snapshot.with_suffix('.tar.gz')
+    if snapshot.exists() or not archive.exists():
+        return
+    expected = json.loads(archive.with_suffix('.json').read_text())
+    if hashlib.sha256(archive.read_bytes()).hexdigest() != expected['sha256']:
+        raise ValueError('Snapshot archive checksum mismatch')
+    with tarfile.open(archive, 'r:gz') as packed:
+        for member in packed.getmembers():
+            path = snapshot / member.name
+            if not member.isfile() or not path.resolve().is_relative_to(snapshot.resolve()):
+                raise ValueError('Invalid archive member')
+            data = packed.extractfile(member).read()
+            if hashlib.sha256(data).hexdigest() != expected['files'][member.name]:
+                raise ValueError('Archived snapshot file checksum mismatch')
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(data)
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('batch',type=Path);parser.add_argument('--workers',type=int,default=4)
+    parser.add_argument('--compress-cache', action='store_true', help='Losslessly gzip cached HTTP response bodies')
+    parser.add_argument('--compact-snapshots', action='store_true', help='Verify and gzip source snapshots after successful rendering')
     args=parser.parse_args();batch=args.batch.resolve()
     guard=(batch/'.batch.lock').open('a')
     fcntl.flock(guard,fcntl.LOCK_EX|fcntl.LOCK_NB)
     logging.getLogger('rdflib.term').setLevel(logging.CRITICAL)
     areas=json.loads((batch/'areas.json').read_text());initialize(batch)
     (batch/'logs').mkdir(exist_ok=True);(batch/'snapshots').mkdir(exist_ok=True)
-    client=RetryClient(batch/'request-cache')
+    client=(CompressedRetryClient if args.compress_cache else RetryClient)(batch/'request-cache')
     rows={a['name']:dict(name=a['name'],label=a['label'],state=a['states'][0],status='queued') for a in areas}
     lock=threading.Lock();work=queue.Queue(maxsize=args.workers*2);acquisition_done=threading.Event()
     previous=ROOT/'build/dtk50-acquisition-fixed'
@@ -89,11 +162,12 @@ def main():
                     if result.get('nonblank_image') and result.get('shacl_conforms'):
                         publish(area,result);continue
                 try:
-                    if shutil.disk_usage(batch).free<8_000_000_000: raise RuntimeError('Less than 8 GB free; paused acquisition')
+                    if shutil.disk_usage(batch).free<16_000_000_000: raise RuntimeError('Less than 16 GB free; paused acquisition')
                     if not snapshot.exists() and name in old_areas and area['bbox']==old_areas[name]['bbox']:
                         old=previous/'snapshots'/name/state
                         snapshot.parent.mkdir(parents=True,exist_ok=True)
                         snapshot.symlink_to(old,target_is_directory=True)
+                    restore_snapshot(snapshot)
                     update(name,status='acquiring')
                     manifest=snapshot/'manifest.json'
                     if manifest.exists():
@@ -124,6 +198,8 @@ def main():
                 subprocess.run([str(ROOT/'.venv/bin/python'),str(Path(__file__).with_name('worker.py')),str(batch),name],
                     cwd=ROOT,stdout=output,stderr=subprocess.STDOUT,check=True)
             result=json.loads((batch/name/'dtk50/validation.json').read_text())
+            if args.compact_snapshots:
+                compact_snapshot(batch/'snapshots'/name/area['states'][0])
             publish(area,result)
             print(name,'READY',result['visible_objects'],'objects',flush=True)
         except Exception as error:
@@ -133,7 +209,7 @@ def main():
     def progress(phase,archives=()):
         with lock: current=[dict(rows[a['name']]) for a in areas]
         payload=dict(updated_at=datetime.now(timezone.utc).isoformat(),phase=phase,
-                     ready=sum(r['status']=='ready' for r in current),areas=current,archives=list(archives))
+                     ready=sum(r['status']=='ready' for r in current),total=len(areas),areas=current,archives=list(archives))
         atomic_json(public/'progress.json',payload);atomic_json(batch/'progress.json',payload)
         return payload
 
@@ -157,14 +233,14 @@ def main():
             archive.writestr('areas.json',json.dumps(selected,ensure_ascii=False,indent=2))
             for area in selected:
                 for path in sorted((public/area['name']).iterdir()): archive.write(path,str(path.relative_to(public)))
-        temporary.replace(public/filename);archives.append(dict(state=state,file=filename))
+        temporary.replace(public/filename);archives.append(dict(state=state,file=filename,count=len(selected)))
         progress('Preparing downloads',archives)
     ready=[rows[a['name']] for a in areas if rows[a['name']]['status']=='ready']
     (public/'dataset.jsonl').write_text(''.join(json.dumps(dict(row,map=row['name']+'/map.png',knowledge_graph=row['name']+'/map.ttl'),ensure_ascii=False)+'\n' for row in ready))
     files=[p for p in public.rglob('*') if p.is_file() and p.name not in ('SHA256SUMS','progress.json')]
     (public/'SHA256SUMS').write_text(''.join(hashlib.sha256(p.read_bytes()).hexdigest()+'  '+str(p.relative_to(public))+'\n' for p in sorted(files)))
-    result=progress('Complete' if len(ready)==100 else 'Incomplete — see failed areas',archives)
-    print('FINISHED',result['ready'],'/100',flush=True)
-    if result['ready']!=100: raise SystemExit(1)
+    result=progress('Complete' if len(ready)==len(areas) else 'Incomplete — see failed areas',archives)
+    print('FINISHED',result['ready'],'/',len(areas),flush=True)
+    if result['ready']!=len(areas): raise SystemExit(1)
 
 if __name__=='__main__': main()
